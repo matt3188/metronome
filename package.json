@@ -1,0 +1,26 @@
+{
+  "name": "metronome-app",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "test": "vitest run",
+    "lint": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue": "latest",
+    "pinia": "latest",
+    "vite": "latest",
+    "vue": "latest",
+    "vue-router": "latest"
+  },
+  "devDependencies": {
+    "@vue/test-utils": "latest",
+    "jsdom": "latest",
+    "typescript": "latest",
+    "vitest": "latest",
+    "vue-tsc": "latest"
+  }
+}
