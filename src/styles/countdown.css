@@ -1,0 +1,10 @@
+/* Custom-session countdown, including light/dark theme support. */
+.session { transition:.25s ease }
+.session.active { min-height:172px;border-radius:22px;background:var(--lime);color:#111;padding:22px 24px;display:flex;flex-direction:column;box-shadow:0 0 40px #d8ff602b }
+.session.active>span { color:#1119;font-weight:700 }
+.countdown { font-size:58px;line-height:1;letter-spacing:-.06em;margin-top:13px;font-variant-numeric:tabular-nums }
+.session-meta { display:flex;align-items:center;justify-content:space-between;margin-top:auto;font-size:11px;font-weight:700;letter-spacing:.12em }
+.session-beats { display:flex;gap:7px }
+.session-beats i { width:7px;height:7px;border-radius:50%;background:#1114;transition:transform .08s ease,background .08s ease }
+.session-beats i.active { background:#111;transform:scale(1.35) }
+.now-playing-time { display:block;color:var(--lime);font-size:10px;font-variant-numeric:tabular-nums;margin-top:2px }
