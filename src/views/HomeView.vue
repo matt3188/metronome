@@ -11,7 +11,7 @@ const { bpm, isPlaying } = storeToRefs(metronome)
 <template>
   <section class="hero">
     <p class="eyebrow">YOUR TEMPO</p><h1>Find your<br><em>rhythm.</em></h1>
-    <p class="lede">Choose a tempo and let the beat guide you.</p>
+    <p class="lede">Choose a tempo to start instantly. The live beat display stays visible while you explore.</p>
   </section>
   <section class="tempo-grid" aria-label="Quick tempos">
     <TempoButton v-for="tempo in [50, 100]" :key="tempo" :bpm="tempo" :active="isPlaying && bpm === tempo" @press="metronome.toggle(tempo)" />

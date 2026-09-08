@@ -10,17 +10,17 @@
     "lint": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "@vitejs/plugin-vue": "latest",
-    "pinia": "latest",
-    "vite": "latest",
-    "vue": "latest",
-    "vue-router": "latest"
+    "@vitejs/plugin-vue": "5.0.5",
+    "pinia": "2.1.7",
+    "vite": "5.3.5",
+    "vue": "3.4.31",
+    "vue-router": "4.4.0"
   },
   "devDependencies": {
-    "@vue/test-utils": "latest",
-    "jsdom": "latest",
-    "typescript": "latest",
-    "vitest": "latest",
-    "vue-tsc": "latest"
+    "@vue/test-utils": "2.4.6",
+    "jsdom": "24.1.1",
+    "typescript": "5.5.4",
+    "vitest": "2.0.5",
+    "vue-tsc": "2.0.29"
   }
 }
