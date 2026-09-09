@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia'
+import { isBuiltInTempo } from '../constants/tempos'
 
 const KEY = 'metronome-presets'
 const load = (): number[] => {
   try {
     const saved: unknown = JSON.parse(localStorage.getItem(KEY) ?? '[]')
     return Array.isArray(saved)
-      ? [...new Set(saved.filter((value): value is number => Number.isInteger(value) && value >= 30 && value <= 240 && ![50, 100].includes(value)))]
+      ? [...new Set(saved.filter((value): value is number => Number.isInteger(value) && value >= 30 && value <= 240 && !isBuiltInTempo(value)))]
       : []
   } catch { return [] }
 }
@@ -14,7 +15,7 @@ export const usePresetsStore = defineStore('presets', {
   state: () => ({ tempos: load() }),
   actions: {
     add(bpm: number) {
-      if (![50, 100].includes(bpm) && !this.tempos.includes(bpm)) {
+      if (!isBuiltInTempo(bpm) && !this.tempos.includes(bpm)) {
         this.tempos.push(bpm)
         localStorage.setItem(KEY, JSON.stringify(this.tempos))
       }
