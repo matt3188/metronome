@@ -28,13 +28,27 @@ describe('TempoButton', () => {
     expect(preset.find('.preset-lock').exists()).toBe(true)
   })
 
-  it('shakes a movable custom tempo only until it has moved', async () => {
+  it('reports pointer movement after a long press for drag reordering', async () => {
+    vi.useFakeTimers()
+    const wrapper = mount(TempoButton, { props: { bpm: 120, active: false } })
+    const button = wrapper.get('.tempo-card')
+
+    await button.trigger('pointerdown', { pointerId: 1 })
+    await vi.advanceTimersByTimeAsync(550)
+    await button.trigger('pointermove', { clientX: 20, clientY: 30 })
+    await button.trigger('pointerup', { pointerId: 1 })
+
+    expect(wrapper.emitted('dragmove')).toEqual([[{ x: 20, y: 30 }]])
+    expect(wrapper.emitted('dragend')).toHaveLength(1)
+  })
+
+  it('marks the tempo being dragged', async () => {
     const wrapper = mount(TempoButton, {
       props: { bpm: 120, active: false, editing: true, canMoveLater: true },
     })
 
-    expect(wrapper.classes()).toContain('movable')
-    await wrapper.setProps({ moved: true })
-    expect(wrapper.classes()).not.toContain('movable')
+    expect(wrapper.classes()).not.toContain('dragging')
+    await wrapper.setProps({ dragging: true })
+    expect(wrapper.classes()).toContain('dragging')
   })
 })
