@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { computed } from 'vue'
 import { useMetronomeStore } from './stores/metronome'
 import { useThemeStore } from './stores/theme'
 
 const metronome = useMetronomeStore()
 const themeStore = useThemeStore()
-const { beat, bpm, isPlaying, remainingSeconds, sessionMinutes } = storeToRefs(metronome)
+const { beat, bpm, isPlaying } = storeToRefs(metronome)
 const { theme } = storeToRefs(themeStore)
-const countdown = computed(() => `${Math.floor(remainingSeconds.value / 60)}:${(remainingSeconds.value % 60).toString().padStart(2, '0')}`)
 </script>
 
 <template>
@@ -48,7 +46,6 @@ const countdown = computed(() => `${Math.floor(remainingSeconds.value / 60)}:${(
       <div>
         <span class="now-playing-label">Now playing</span>
         <strong>{{ bpm }} <small>BPM</small></strong>
-        <span v-if="sessionMinutes" class="now-playing-time" role="timer">{{ countdown }} left</span>
       </div>
       <div class="beat-track" aria-label="Four beat measure">
         <span v-for="index in 4" :key="index" :class="{ active: beat % 4 === index - 1 }" />
