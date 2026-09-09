@@ -2,6 +2,7 @@
 import { storeToRefs } from 'pinia'
 import { ref } from 'vue'
 import TempoButton from '../components/TempoButton.vue'
+import { BUILT_IN_TEMPOS } from '../constants/tempos'
 import { useMetronomeStore } from '../stores/metronome'
 import { usePresetsStore } from '../stores/presets'
 
@@ -29,7 +30,7 @@ const moveTempo = (tempo: number, direction: -1 | 1) => {
     <button type="button" :aria-pressed="editing" @click="setEditing(!editing)">{{ editing ? 'Done' : 'Manage' }}</button>
   </div>
   <section class="tempo-grid" :class="{ editing }" aria-label="Quick tempos">
-    <TempoButton v-for="tempo in [50, 100]" :key="tempo" :bpm="tempo" :active="isPlaying && bpm === tempo" :editing="editing" preset @longpress="setEditing(true)" @press="editing ? undefined : metronome.toggle(tempo)" />
+    <TempoButton v-for="tempo in BUILT_IN_TEMPOS" :key="tempo" :bpm="tempo" :active="isPlaying && bpm === tempo" :editing="editing" preset @longpress="setEditing(true)" @press="editing ? undefined : metronome.toggle(tempo)" />
     <TempoButton
       v-for="(tempo, index) in presets.tempos"
       :key="`preset-${tempo}`"
