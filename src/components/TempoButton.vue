@@ -69,3 +69,85 @@ onBeforeUnmount(cancelHold)
     <span v-else-if="editing" class="preset-lock" aria-hidden="true">🔒</span>
   </article>
 </template>
+
+<style scoped>
+.tempo-card-wrap {
+  min-width: 0;
+  position: relative;
+}
+
+.tempo-card {
+  width: 100%;
+  -webkit-touch-callout: none;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.editing .tempo-card {
+  transform: none;
+  border-color: color-mix(in srgb, var(--lime) 45%, var(--border));
+  padding-bottom: 64px;
+}
+
+.movable {
+  animation: tempo-wiggle .28s ease-in-out infinite alternate;
+}
+
+.preset.editing .tempo-card {
+  border-style: dashed;
+  opacity: .72;
+}
+
+.tempo-actions {
+  position: absolute;
+  z-index: 2;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+
+.tempo-actions button {
+  height: 38px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-raised);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.tempo-actions button:disabled {
+  cursor: not-allowed;
+  opacity: .25;
+}
+
+.tempo-actions .remove-tempo {
+  background: #ff6b6430;
+  color: #ff8a84;
+}
+
+.preset-lock {
+  position: absolute;
+  z-index: 2;
+  bottom: 22px;
+  left: 22px;
+  font-size: 18px;
+}
+
+@keyframes tempo-wiggle {
+  from { transform: rotate(-.55deg) translateY(-1px); }
+  to { transform: rotate(.55deg) translateY(1px); }
+}
+
+@media (min-width: 650px) {
+  .tempo-card { min-height: 240px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .movable { animation: none; }
+}
+</style>

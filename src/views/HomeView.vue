@@ -48,3 +48,35 @@ const moveTempo = (tempo: number, direction: -1 | 1) => {
     <RouterLink to="/custom" class="custom-card"><span class="plus">＋</span><strong>Custom</strong><small>Set your own pace</small></RouterLink>
   </section>
 </template>
+
+<style scoped>
+.tempo-grid-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 38px;
+  margin: 0 2px 10px;
+}
+
+.tempo-grid-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: .08em;
+}
+
+.tempo-grid-heading button {
+  padding: 7px 15px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--lime);
+  color: #111;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.tempo-grid.editing .custom-card {
+  pointer-events: none;
+  opacity: .45;
+}
+</style>
