@@ -4,11 +4,17 @@ import { usePresetsStore } from './presets'
 
 describe('presets store', () => {
   beforeEach(() => { localStorage.clear(); setActivePinia(createPinia()) })
-  it('persists tempos in the order they were added and prevents duplicates', () => {
+  it('persists custom tempos in the order they were added and prevents duplicates', () => {
     const store = usePresetsStore()
-    store.add(120); store.add(80); store.add(120); store.add(50)
+    store.add(120); store.add(80); store.add(120); store.add(50); store.add(100)
     expect(store.tempos).toEqual([120, 80])
     expect(localStorage.getItem('metronome-presets')).toBe('[120,80]')
+  })
+  it('removes built-in tempos when loading saved custom tempos', () => {
+    localStorage.setItem('metronome-presets', '[50,80,100,120]')
+    setActivePinia(createPinia())
+
+    expect(usePresetsStore().tempos).toEqual([80, 120])
   })
   it('reorders and removes custom tempos persistently', () => {
     const store = usePresetsStore()
