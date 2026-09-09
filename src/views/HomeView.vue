@@ -10,14 +10,17 @@ const metronome = useMetronomeStore()
 const presets = usePresetsStore()
 const { bpm, isPlaying } = storeToRefs(metronome)
 const editing = ref(false)
-const movedTempos = ref(new Set<number>())
+const draggingTempo = ref<number>()
 const setEditing = (value: boolean) => {
-  if (value && !editing.value) movedTempos.value = new Set()
   editing.value = value
+  if (!value) draggingTempo.value = undefined
 }
-const moveTempo = (tempo: number, direction: -1 | 1) => {
-  presets.move(tempo, direction)
-  movedTempos.value.add(tempo)
+const dragTempo = (tempo: number, point: { x: number; y: number }) => {
+  draggingTempo.value = tempo
+  const target = document.elementFromPoint(point.x, point.y)?.closest<HTMLElement>('[data-tempo]')
+  if (!target) return
+  const targetTempo = Number(target.dataset.tempo)
+  if (presets.tempos.includes(targetTempo)) presets.moveTo(tempo, targetTempo)
 }
 </script>
 <template>
@@ -26,7 +29,7 @@ const moveTempo = (tempo: number, direction: -1 | 1) => {
     <p class="lede">Choose a tempo to start instantly. The live beat display stays visible while you explore.</p>
   </section>
   <div class="tempo-grid-heading">
-    <p>{{ editing ? 'Arrange your custom tempos' : 'Press and hold a tempo to edit' }}</p>
+    <p>{{ editing ? 'Drag custom tempos to rearrange' : 'Press and hold any tempo to edit' }}</p>
     <button type="button" :aria-pressed="editing" @click="setEditing(!editing)">{{ editing ? 'Done' : 'Manage' }}</button>
   </div>
   <section class="tempo-grid" :class="{ editing }" aria-label="Quick tempos">
@@ -37,14 +40,16 @@ const moveTempo = (tempo: number, direction: -1 | 1) => {
       :bpm="tempo"
       :active="isPlaying && bpm === tempo"
       :editing="editing"
-      :moved="movedTempos.has(tempo)"
+      :dragging="draggingTempo === tempo"
       :can-move-earlier="index > 0"
       :can-move-later="index < presets.tempos.length - 1"
       label="Saved tempo"
       @longpress="setEditing(true)"
       @press="editing ? undefined : metronome.toggle(tempo)"
       @remove="presets.remove(tempo)"
-      @move="moveTempo(tempo, $event)"
+      @move="presets.move(tempo, $event)"
+      @dragmove="dragTempo(tempo, $event)"
+      @dragend="draggingTempo = undefined"
     />
     <RouterLink to="/custom" class="custom-card"><span class="plus">＋</span><strong>Custom</strong><small>Set your own pace</small></RouterLink>
   </section>

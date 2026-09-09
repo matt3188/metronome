@@ -34,5 +34,15 @@ export const usePresetsStore = defineStore('presets', {
       this.tempos = reordered
       localStorage.setItem(KEY, JSON.stringify(this.tempos))
     },
+    moveTo(bpm: number, targetBpm: number) {
+      const from = this.tempos.indexOf(bpm)
+      const to = this.tempos.indexOf(targetBpm)
+      if (from === -1 || to === -1 || from === to) return
+      const reordered = [...this.tempos]
+      const [tempo] = reordered.splice(from, 1)
+      reordered.splice(to, 0, tempo)
+      this.tempos = reordered
+      localStorage.setItem(KEY, JSON.stringify(this.tempos))
+    },
   },
 })

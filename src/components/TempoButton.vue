@@ -7,24 +7,39 @@ defineProps<{
   label?: string
   editing?: boolean
   preset?: boolean
-  moved?: boolean
   canMoveEarlier?: boolean
   canMoveLater?: boolean
+  dragging?: boolean
 }>()
-const emit = defineEmits<{ press: []; longpress: []; remove: []; move: [direction: -1 | 1] }>()
+const emit = defineEmits<{ press: []; longpress: []; remove: []; move: [direction: -1 | 1]; dragmove: [point: { x: number; y: number }]; dragend: [] }>()
 
 const held = ref(false)
 let timer: ReturnType<typeof setTimeout> | undefined
-const startHold = () => {
+let pointerId: number | undefined
+let holdTarget: HTMLElement | undefined
+const startHold = (event: PointerEvent) => {
   held.value = false
+  pointerId = event.pointerId
+  holdTarget = event.currentTarget as HTMLElement
   timer = setTimeout(() => {
     held.value = true
+    holdTarget?.setPointerCapture?.(pointerId!)
     emit('longpress')
   }, 550)
 }
-const cancelHold = () => {
+const cancelHold = (event?: PointerEvent) => {
   if (timer) clearTimeout(timer)
   timer = undefined
+  if (held.value && event) emit('dragend')
+  if (pointerId !== undefined && holdTarget?.hasPointerCapture?.(pointerId)) holdTarget.releasePointerCapture?.(pointerId)
+  pointerId = undefined
+  holdTarget = undefined
+}
+const drag = (event: PointerEvent) => {
+  if (held.value) emit('dragmove', { x: event.clientX, y: event.clientY })
+}
+const leave = (event: PointerEvent) => {
+  if (!held.value) cancelHold(event)
 }
 const press = () => {
   if (held.value) {
@@ -38,7 +53,8 @@ onBeforeUnmount(cancelHold)
 <template>
   <article
     class="tempo-card-wrap"
-    :class="{ editing, preset, movable: editing && !preset && !moved && (canMoveEarlier || canMoveLater) }"
+    :class="{ editing, preset, dragging }"
+    :data-tempo="bpm"
   >
     <button
       class="tempo-card"
@@ -47,9 +63,10 @@ onBeforeUnmount(cancelHold)
       :aria-label="`${bpm} BPM${editing ? (preset ? ', built-in preset' : ', custom tempo') : ''}`"
       @click="press"
       @pointerdown="startHold"
+      @pointermove="drag"
       @pointerup="cancelHold"
       @pointercancel="cancelHold"
-      @pointerleave="cancelHold"
+      @pointerleave="leave"
       @contextmenu.prevent
     >
       <span class="tempo-value">{{ bpm }}</span><span class="tempo-unit">BPM</span>
