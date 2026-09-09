@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# npm 11 no longer recognizes npm_config_http_proxy. Preserve the configured
+# proxy through npm's supported `proxy` setting before removing the legacy key.
+if [ -n "${npm_config_http_proxy:-}" ] && [ -z "${npm_config_proxy:-}" ]; then
+  npm_config_proxy=$npm_config_http_proxy
+  export npm_config_proxy
+fi
+
+unset npm_config_http_proxy
+
+exec npm "$@"
