@@ -15,12 +15,20 @@ const setEditing = (value: boolean) => {
   editing.value = value
   if (!value) draggingTempo.value = undefined
 }
+const tempoAtPoint = (tempo: number, point: { x: number; y: number }) => {
+  const elements = document.elementsFromPoint?.(point.x, point.y)
+    ?? [document.elementFromPoint(point.x, point.y)].filter((element): element is Element => element !== null)
+
+  return elements
+    .map(element => element.closest<HTMLElement>('[data-custom-tempo]'))
+    .find(element => element && Number(element.dataset.tempo) !== tempo)
+}
 const dragTempo = (tempo: number, point: { x: number; y: number }) => {
   draggingTempo.value = tempo
-  const target = document.elementFromPoint(point.x, point.y)?.closest<HTMLElement>('[data-tempo]')
+  const target = tempoAtPoint(tempo, point)
   if (!target) return
   const targetTempo = Number(target.dataset.tempo)
-  if (presets.tempos.includes(targetTempo)) presets.moveTo(tempo, targetTempo)
+  presets.moveTo(tempo, targetTempo)
 }
 </script>
 <template>

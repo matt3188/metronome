@@ -55,6 +55,7 @@ onBeforeUnmount(cancelHold)
     class="tempo-card-wrap"
     :class="{ editing, preset, dragging }"
     :data-tempo="bpm"
+    :data-custom-tempo="preset ? undefined : ''"
   >
     <button
       class="tempo-card"
