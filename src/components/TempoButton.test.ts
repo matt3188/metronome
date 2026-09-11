@@ -51,4 +51,12 @@ describe('TempoButton', () => {
     await wrapper.setProps({ dragging: true })
     expect(wrapper.classes()).toContain('dragging')
   })
+
+  it('identifies only custom tempos as drag targets', () => {
+    const custom = mount(TempoButton, { props: { bpm: 120, active: false } })
+    const builtIn = mount(TempoButton, { props: { bpm: 100, active: false, preset: true } })
+
+    expect(custom.attributes('data-custom-tempo')).toBe('')
+    expect(builtIn.attributes()).not.toHaveProperty('data-custom-tempo')
+  })
 })
