@@ -16,8 +16,9 @@ const setEditing = (value: boolean) => {
   if (!value) draggingTempo.value = undefined
 }
 const tempoAtPoint = (tempo: number, point: { x: number; y: number }) => {
+  const topElement = document.elementFromPoint?.(point.x, point.y)
   const elements = document.elementsFromPoint?.(point.x, point.y)
-    ?? [document.elementFromPoint(point.x, point.y)].filter((element): element is Element => element !== null)
+    ?? (topElement ? [topElement] : [])
 
   return elements
     .map(element => element.closest<HTMLElement>('[data-custom-tempo]'))
