@@ -4,8 +4,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "check:conflicts": "node scripts/check-merge-conflicts.mjs",
     "dev": "vite",
     "build": "vite build",
+    "pretest": "npm run check:conflicts",
     "test": "vitest run",
     "lint": "vue-tsc --noEmit"
   },
