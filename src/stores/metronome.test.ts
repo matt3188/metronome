@@ -43,4 +43,16 @@ describe('metronome store', () => {
     expect(store.pitch).toBe('low')
     expect(metronomeService.preview).toHaveBeenCalledWith('low')
   })
+
+  it('changes the pitch of a metronome that is already playing', async () => {
+    const store = useMetronomeStore()
+    await store.toggle(120)
+
+    store.togglePitch()
+
+    expect(store.pitch).toBe('low')
+    expect(store.isPlaying).toBe(true)
+    expect(metronomeService.setPitch).toHaveBeenCalledWith('low')
+    expect(metronomeService.start).toHaveBeenCalledOnce()
+  })
 })
