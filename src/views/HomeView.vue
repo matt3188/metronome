@@ -8,7 +8,7 @@ import { usePresetsStore } from '../stores/presets'
 
 const metronome = useMetronomeStore()
 const presets = usePresetsStore()
-const { bpm, isPlaying } = storeToRefs(metronome)
+const { bpm, pitch, isPlaying } = storeToRefs(metronome)
 const editing = ref(false)
 const draggingTempo = ref<number>()
 const setEditing = (value: boolean) => {
@@ -42,19 +42,19 @@ const dragTempo = (tempo: number, point: { x: number; y: number }) => {
     <button type="button" :aria-pressed="editing" @click="setEditing(!editing)">{{ editing ? 'Done' : 'Manage' }}</button>
   </div>
   <section class="tempo-grid" :class="{ editing }" aria-label="Quick tempos">
-    <TempoButton v-for="tempo in BUILT_IN_TEMPOS" :key="tempo" :bpm="tempo" :active="isPlaying && bpm === tempo" :editing="editing" preset @longpress="setEditing(true)" @press="editing ? undefined : metronome.toggle(tempo)" />
+    <TempoButton v-for="tempo in BUILT_IN_TEMPOS" :key="tempo" :bpm="tempo" :active="isPlaying && bpm === tempo && pitch === 'high'" :editing="editing" preset @longpress="setEditing(true)" @press="editing ? undefined : metronome.toggle(tempo, 'high')" />
     <TempoButton
       v-for="(tempo, index) in presets.tempos"
       :key="`preset-${tempo}`"
       :bpm="tempo"
-      :active="isPlaying && bpm === tempo"
+      :active="isPlaying && bpm === tempo && pitch === (presets.pitches[tempo] ?? 'high')"
       :editing="editing"
       :dragging="draggingTempo === tempo"
       :can-move-earlier="index > 0"
       :can-move-later="index < presets.tempos.length - 1"
-      label="Saved tempo"
+      :label="`${presets.pitches[tempo] ?? 'high'} pitch`"
       @longpress="setEditing(true)"
-      @press="editing ? undefined : metronome.toggle(tempo)"
+      @press="editing ? undefined : metronome.toggle(tempo, presets.pitches[tempo] ?? 'high')"
       @remove="presets.remove(tempo)"
       @move="presets.move(tempo, $event)"
       @dragmove="dragTempo(tempo, $event)"

@@ -29,4 +29,14 @@ describe('presets store', () => {
     expect(store.tempos).toEqual([160, 120])
     expect(localStorage.getItem('metronome-presets')).toBe('[160,120]')
   })
+  it('persists the selected pitch with a custom tempo', () => {
+    const store = usePresetsStore()
+    store.add(120, 'low')
+
+    expect(store.pitches[120]).toBe('low')
+    expect(localStorage.getItem('metronome-preset-pitches')).toBe('{"120":"low"}')
+
+    store.remove(120)
+    expect(store.pitches[120]).toBeUndefined()
+  })
 })
