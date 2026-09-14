@@ -20,11 +20,18 @@ let pointerId: number | undefined
 let holdTarget: HTMLElement | undefined
 let holdOrigin: { x: number; y: number } | undefined
 let suppressPress = false
+let touchPointer = false
+let suppressClickTimer: ReturnType<typeof setTimeout> | undefined
 const isDragging = computed(() => held.value && !props.preset)
 const dragStyle = computed(() => isDragging.value
   ? { '--drag-x': `${dragOffset.value.x}px`, '--drag-y': `${dragOffset.value.y}px` }
   : undefined)
 const startHold = (event: PointerEvent) => {
+  // Stop mobile browsers from turning a long press into text selection or a
+  // callout. Touch taps are emitted on pointerup because this cancels the
+  // browser's compatibility click on some devices.
+  touchPointer = event.pointerType === 'touch' || event.pointerType === 'pen'
+  if (touchPointer) event.preventDefault()
   held.value = false
   suppressPress = false
   dragOffset.value = { x: 0, y: 0 }
@@ -51,10 +58,17 @@ const cancelHold = (event?: PointerEvent) => {
   held.value = false
   suppressPress = wasHeld
   if (wasHeld && event) emit('dragend')
+  if (!wasHeld && event && touchPointer) {
+    emit('press')
+    suppressPress = true
+  }
+  if (suppressClickTimer) clearTimeout(suppressClickTimer)
+  if (suppressPress) suppressClickTimer = setTimeout(() => { suppressPress = false }, 500)
   if (pointerId !== undefined && holdTarget?.hasPointerCapture?.(pointerId)) holdTarget.releasePointerCapture?.(pointerId)
   pointerId = undefined
   holdTarget = undefined
   holdOrigin = undefined
+  touchPointer = false
   dragOffset.value = { x: 0, y: 0 }
 }
 const drag = (event: PointerEvent) => {
@@ -74,7 +88,10 @@ const press = () => {
   }
   emit('press')
 }
-onBeforeUnmount(cancelHold)
+onBeforeUnmount(() => {
+  if (suppressClickTimer) clearTimeout(suppressClickTimer)
+  cancelHold()
+})
 </script>
 <template>
   <article
@@ -95,7 +112,9 @@ onBeforeUnmount(cancelHold)
       @pointerup="cancelHold"
       @pointercancel="cancelHold"
       @pointerleave="leave"
+      @selectstart.prevent
       @contextmenu.prevent
+      draggable="false"
     >
       <span class="tempo-value">{{ bpm }}</span><span class="tempo-unit">BPM</span>
       <span class="play-icon" aria-hidden="true">{{ active ? 'Ⅱ' : '▶' }}</span>
