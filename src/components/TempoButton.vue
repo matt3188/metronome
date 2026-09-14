@@ -22,7 +22,7 @@ let holdOrigin: { x: number; y: number } | undefined
 let suppressPress = false
 let touchPointer = false
 let suppressClickTimer: ReturnType<typeof setTimeout> | undefined
-const isDragging = computed(() => held.value && !props.preset)
+const isDragging = computed(() => held.value)
 const dragStyle = computed(() => isDragging.value
   ? { '--drag-x': `${dragOffset.value.x}px`, '--drag-y': `${dragOffset.value.y}px` }
   : undefined)
@@ -39,7 +39,7 @@ const startHold = (event: PointerEvent) => {
   holdTarget = event.currentTarget as HTMLElement
   holdOrigin = { x: event.clientX ?? 0, y: event.clientY ?? 0 }
 
-  if (props.editing && !props.preset) {
+  if (props.editing) {
     held.value = true
     holdTarget.setPointerCapture?.(pointerId)
     return
@@ -99,13 +99,13 @@ onBeforeUnmount(() => {
     :class="{ editing, preset, dragging: dragging || isDragging }"
     :style="dragStyle"
     :data-tempo="bpm"
-    :data-custom-tempo="preset ? undefined : ''"
+    data-dashboard-tempo
   >
     <button
       class="tempo-card"
       :class="{ active }"
       :aria-pressed="active"
-      :aria-label="`${bpm} BPM${editing ? (preset ? ', built-in preset' : ', custom tempo') : ''}`"
+      :aria-label="`${bpm} BPM${editing ? (preset ? ', preset tempo' : ', custom tempo') : ''}`"
       @click="press"
       @pointerdown="startHold"
       @pointermove="drag"
@@ -118,13 +118,12 @@ onBeforeUnmount(() => {
     >
       <span class="tempo-value">{{ bpm }}</span><span class="tempo-unit">BPM</span>
       <span class="play-icon" aria-hidden="true">{{ active ? 'Ⅱ' : '▶' }}</span>
-      <span class="tempo-label">{{ editing ? (preset ? 'Built-in · locked' : 'Custom tempo') : (label ?? 'Tap to play') }}</span>
+      <span class="tempo-label">{{ editing ? (preset ? 'Preset tempo' : 'Custom tempo') : (label ?? 'Tap to play') }}</span>
     </button>
-    <div v-if="editing && !preset" class="tempo-actions" aria-label="Custom tempo controls">
+    <div v-if="editing" class="tempo-actions" :aria-label="`${bpm} BPM tempo controls`">
       <button type="button" :disabled="!canMoveEarlier" :aria-label="`Move ${bpm} BPM earlier`" @click="$emit('move', -1)">←</button>
       <button type="button" class="remove-tempo" :aria-label="`Remove ${bpm} BPM`" @click="$emit('remove')">×</button>
       <button type="button" :disabled="!canMoveLater" :aria-label="`Move ${bpm} BPM later`" @click="$emit('move', 1)">→</button>
     </div>
-    <span v-else-if="editing" class="preset-lock" aria-hidden="true">🔒</span>
   </article>
 </template>
