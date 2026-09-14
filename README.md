@@ -22,10 +22,12 @@ Run the test suite with `./scripts/npm test` and create a production build with
 
 Open the local URL printed by Vite (normally `http://localhost:5173`) to see the app. Pick a tempo card to begin playback; the header status and persistent now-playing bar show the active BPM and current beat, and provide a stop control from either screen.
 
-Open, non-draft pull requests targeting `main` are automatically updated after
-`main` changes and every six hours. Contributors must leave **Allow edits from
-maintainers** enabled. The workflow reports genuinely conflicting branches in
-its job summary rather than applying an unsafe automatic conflict resolution.
+Open, non-draft pull requests targeting `main` are automatically updated when
+pull-request activity or a `main` change starts the workflow, and every six
+hours. Each run sweeps the entire open queue, continues past individual API
+failures, and leaves a complete job summary. Contributors must leave **Allow
+edits from maintainers** enabled. The workflow reports branches that GitHub
+cannot update rather than applying an unsafe automatic conflict resolution.
 
 ## Architecture
 
