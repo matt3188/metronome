@@ -20,6 +20,9 @@ export const useMetronomeStore = defineStore('metronome', {
       this.pitch = pitch
       if (this.isPlaying) metronomeService.setPitch(pitch)
     },
+    togglePitch() {
+      this.setPitch(this.pitch === 'high' ? 'low' : 'high')
+    },
     previewPitch(pitch: MetronomePitch = this.pitch) {
       this.setPitch(pitch)
       return metronomeService.preview(pitch)

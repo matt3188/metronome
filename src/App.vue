@@ -5,7 +5,7 @@ import { useThemeStore } from './stores/theme'
 
 const metronome = useMetronomeStore()
 const themeStore = useThemeStore()
-const { beat, bpm, isPlaying } = storeToRefs(metronome)
+const { beat, bpm, isPlaying, pitch } = storeToRefs(metronome)
 const { theme } = storeToRefs(themeStore)
 </script>
 
@@ -18,6 +18,23 @@ const { theme } = storeToRefs(themeStore)
           <span class="status-light" />
           {{ isPlaying ? `Playing · ${bpm} BPM` : 'Ready' }}
         </div>
+        <button
+          class="pitch-toggle"
+          type="button"
+          role="switch"
+          :aria-checked="pitch === 'low'"
+          :aria-label="`Switch to ${pitch === 'high' ? 'low' : 'high'} pitch`"
+          :title="`Switch to ${pitch === 'high' ? 'low' : 'high'} pitch`"
+          @click="metronome.togglePitch"
+        >
+          <span class="pitch-option pitch-option-high" aria-hidden="true">High</span>
+          <span class="pitch-option pitch-option-low" aria-hidden="true">Low</span>
+          <span class="pitch-toggle-thumb" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M4 14v-4m5 7V7m5 13V4m5 11V9" />
+            </svg>
+          </span>
+        </button>
         <button
           class="theme-toggle"
           type="button"
@@ -45,7 +62,7 @@ const { theme } = storeToRefs(themeStore)
     <aside v-if="isPlaying" class="now-playing" aria-label="Metronome playback controls">
       <div>
         <span class="now-playing-label">Now playing</span>
-        <strong>{{ bpm }} <small>BPM</small></strong>
+        <strong>{{ bpm }} <small>BPM · {{ pitch }} pitch</small></strong>
       </div>
       <div class="beat-track" aria-label="Four beat measure">
         <span v-for="index in 4" :key="index" :class="{ active: beat % 4 === index - 1 }" />
