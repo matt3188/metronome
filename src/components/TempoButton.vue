@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 
 const props = defineProps<{
   bpm: number
@@ -14,43 +14,66 @@ const props = defineProps<{
 const emit = defineEmits<{ press: []; longpress: []; remove: []; move: [direction: -1 | 1]; dragmove: [point: { x: number; y: number }]; dragend: [] }>()
 
 const held = ref(false)
+const dragOffset = ref({ x: 0, y: 0 })
 let timer: ReturnType<typeof setTimeout> | undefined
 let pointerId: number | undefined
-let holdTarget: HTMLElement | undefined
+let holdOrigin: { x: number; y: number } | undefined
+let suppressPress = false
+const isDragging = computed(() => held.value && !props.preset)
+const dragStyle = computed(() => isDragging.value
+  ? { '--drag-x': `${dragOffset.value.x}px`, '--drag-y': `${dragOffset.value.y}px` }
+  : undefined)
+const removePointerListeners = () => {
+  window.removeEventListener('pointermove', drag)
+  window.removeEventListener('pointerup', cancelHold)
+  window.removeEventListener('pointercancel', cancelHold)
+}
 const startHold = (event: PointerEvent) => {
+  if (pointerId !== undefined) return
   held.value = false
+  suppressPress = false
+  dragOffset.value = { x: 0, y: 0 }
   pointerId = event.pointerId
-  holdTarget = event.currentTarget as HTMLElement
+  holdOrigin = { x: event.clientX ?? 0, y: event.clientY ?? 0 }
+  window.addEventListener('pointermove', drag, { passive: false })
+  window.addEventListener('pointerup', cancelHold)
+  window.addEventListener('pointercancel', cancelHold)
 
   if (props.editing && !props.preset) {
     held.value = true
-    holdTarget.setPointerCapture?.(pointerId)
     return
   }
 
   timer = setTimeout(() => {
     held.value = true
-    holdTarget?.setPointerCapture?.(pointerId!)
     emit('longpress')
   }, 550)
 }
-const cancelHold = (event?: PointerEvent) => {
+function cancelHold(event?: PointerEvent) {
+  if (event && pointerId !== undefined && event.pointerId !== pointerId) return
   if (timer) clearTimeout(timer)
   timer = undefined
-  if (held.value && event) emit('dragend')
-  if (pointerId !== undefined && holdTarget?.hasPointerCapture?.(pointerId)) holdTarget.releasePointerCapture?.(pointerId)
+  const wasHeld = held.value
+  held.value = false
+  suppressPress = wasHeld
+  if (wasHeld && event) emit('dragend')
+  removePointerListeners()
   pointerId = undefined
-  holdTarget = undefined
+  holdOrigin = undefined
+  dragOffset.value = { x: 0, y: 0 }
 }
-const drag = (event: PointerEvent) => {
-  if (held.value) emit('dragmove', { x: event.clientX, y: event.clientY })
-}
-const leave = (event: PointerEvent) => {
-  if (!held.value) cancelHold(event)
+function drag(event: PointerEvent) {
+  if (pointerId === undefined || event.pointerId !== pointerId) return
+  if (held.value && holdOrigin) {
+    event.preventDefault()
+    dragOffset.value = { x: event.clientX - holdOrigin.x, y: event.clientY - holdOrigin.y }
+    emit('dragmove', { x: event.clientX, y: event.clientY })
+  }
 }
 const press = () => {
-  if (held.value) {
+  if (held.value || suppressPress) {
     held.value = false
+    suppressPress = false
     return
   }
   emit('press')
@@ -60,7 +83,8 @@ onBeforeUnmount(cancelHold)
 <template>
   <article
     class="tempo-card-wrap"
-    :class="{ editing, preset, dragging }"
+    :class="{ editing, preset, dragging: dragging || isDragging }"
+    :style="dragStyle"
     :data-tempo="bpm"
     :data-custom-tempo="preset ? undefined : ''"
   >
@@ -71,10 +95,6 @@ onBeforeUnmount(cancelHold)
       :aria-label="`${bpm} BPM${editing ? (preset ? ', built-in preset' : ', custom tempo') : ''}`"
       @click="press"
       @pointerdown="startHold"
-      @pointermove="drag"
-      @pointerup="cancelHold"
-      @pointercancel="cancelHold"
-      @pointerleave="leave"
       @contextmenu.prevent
     >
       <span class="tempo-value">{{ bpm }}</span><span class="tempo-unit">BPM</span>

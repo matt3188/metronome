@@ -20,9 +20,21 @@ const tempoAtPoint = (tempo: number, point: { x: number; y: number }) => {
   const elements = document.elementsFromPoint?.(point.x, point.y)
     ?? (topElement ? [topElement] : [])
 
-  return elements
+  const hitTarget = elements
     .map(element => element.closest<HTMLElement>('[data-custom-tempo]'))
     .find(element => element && Number(element.dataset.tempo) !== tempo)
+  if (hitTarget) return hitTarget
+
+  // Some mobile browsers return only the pointer-captured (dragged) element from
+  // elementsFromPoint. Checking the other cards' geometry keeps reordering
+  // working while the dragged tile is rendered above them.
+  return [...document.querySelectorAll<HTMLElement>('[data-custom-tempo]')]
+    .filter(element => Number(element.dataset.tempo) !== tempo)
+    .find(element => {
+      const bounds = element.getBoundingClientRect()
+      return point.x >= bounds.left && point.x <= bounds.right
+        && point.y >= bounds.top && point.y <= bounds.bottom
+    })
 }
 const dragTempo = (tempo: number, point: { x: number; y: number }) => {
   draggingTempo.value = tempo

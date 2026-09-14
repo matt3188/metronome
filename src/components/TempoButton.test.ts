@@ -2,6 +2,14 @@ import { mount } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import TempoButton from './TempoButton.vue'
 
+const pointerEvent = (type: string, properties: Record<string, number>) => {
+  const event = new Event(type, { bubbles: true, cancelable: true })
+  Object.defineProperties(event, Object.fromEntries(
+    Object.entries(properties).map(([key, value]) => [key, { value }]),
+  ))
+  return event
+}
+
 describe('TempoButton', () => {
   afterEach(() => vi.useRealTimers())
 
@@ -10,9 +18,10 @@ describe('TempoButton', () => {
     const wrapper = mount(TempoButton, { props: { bpm: 120, active: false } })
     const button = wrapper.get('.tempo-card')
 
-    await button.trigger('pointerdown')
+    await button.trigger('pointerdown', { pointerId: 1 })
     await vi.advanceTimersByTimeAsync(550)
-    await button.trigger('pointerup')
+    window.dispatchEvent(pointerEvent('pointerup', { pointerId: 1 }))
+    await wrapper.vm.$nextTick()
     await button.trigger('click')
 
     expect(wrapper.emitted('longpress')).toHaveLength(1)
@@ -35,11 +44,20 @@ describe('TempoButton', () => {
 
     await button.trigger('pointerdown', { pointerId: 1 })
     await vi.advanceTimersByTimeAsync(550)
-    await button.trigger('pointermove', { clientX: 20, clientY: 30 })
-    await button.trigger('pointerup', { pointerId: 1 })
+    window.dispatchEvent(pointerEvent('pointermove', { pointerId: 1, clientX: 20, clientY: 30 }))
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.classes()).toContain('dragging')
+    expect(wrapper.attributes('style')).toContain('--drag-x: 20px')
+    expect(wrapper.attributes('style')).toContain('--drag-y: 30px')
+
+    window.dispatchEvent(pointerEvent('pointerup', { pointerId: 1 }))
+    await wrapper.vm.$nextTick()
 
     expect(wrapper.emitted('dragmove')).toEqual([[{ x: 20, y: 30 }]])
     expect(wrapper.emitted('dragend')).toHaveLength(1)
+    expect(wrapper.classes()).not.toContain('dragging')
+    expect(wrapper.attributes('style')).toBeUndefined()
   })
 
   it('starts dragging custom tempos immediately while in edit mode', async () => {
@@ -50,8 +68,9 @@ describe('TempoButton', () => {
     const button = wrapper.get('.tempo-card')
 
     await button.trigger('pointerdown', { pointerId: 1 })
-    await button.trigger('pointermove', { pointerId: 1, clientX: 20, clientY: 30 })
-    await button.trigger('pointerup', { pointerId: 1 })
+    window.dispatchEvent(pointerEvent('pointermove', { pointerId: 1, clientX: 20, clientY: 30 }))
+    window.dispatchEvent(pointerEvent('pointerup', { pointerId: 1 }))
+    await wrapper.vm.$nextTick()
     await button.trigger('click')
 
     expect(wrapper.emitted('dragmove')).toEqual([[{ x: 20, y: 30 }]])
@@ -67,8 +86,9 @@ describe('TempoButton', () => {
     const button = wrapper.get('.tempo-card')
 
     await button.trigger('pointerdown', { pointerId: 1 })
-    await button.trigger('pointermove', { pointerId: 1, clientX: 20, clientY: 30 })
-    await button.trigger('pointerup', { pointerId: 1 })
+    window.dispatchEvent(pointerEvent('pointermove', { pointerId: 1, clientX: 20, clientY: 30 }))
+    window.dispatchEvent(pointerEvent('pointerup', { pointerId: 1 }))
+    await wrapper.vm.$nextTick()
 
     expect(wrapper.emitted('dragmove')).toBeUndefined()
   })
