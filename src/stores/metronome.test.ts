@@ -7,6 +7,8 @@ vi.mock('../services/metronome', () => ({
   metronomeService: {
     start: vi.fn().mockResolvedValue(undefined),
     setTempo: vi.fn(),
+    setPitch: vi.fn(),
+    preview: vi.fn().mockResolvedValue(undefined),
     stop: vi.fn(),
   },
 }))
@@ -24,12 +26,21 @@ describe('metronome store', () => {
 
     expect(store.isPlaying).toBe(true)
     expect(store.bpm).toBe(120)
-    expect(metronomeService.start).toHaveBeenCalledWith(120, expect.any(Function))
+    expect(metronomeService.start).toHaveBeenCalledWith(120, 'high', expect.any(Function))
     expect(metronomeService.stop).not.toHaveBeenCalled()
 
     await store.toggle(120)
 
     expect(store.isPlaying).toBe(false)
     expect(metronomeService.stop).toHaveBeenCalledOnce()
+  })
+
+  it('changes and previews the selected pitch', async () => {
+    const store = useMetronomeStore()
+    store.setPitch('low')
+    await store.previewPitch()
+
+    expect(store.pitch).toBe('low')
+    expect(metronomeService.preview).toHaveBeenCalledWith('low')
   })
 })
