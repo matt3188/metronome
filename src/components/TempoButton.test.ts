@@ -19,13 +19,13 @@ describe('TempoButton', () => {
     expect(wrapper.emitted('press')).toBeUndefined()
   })
 
-  it('shows remove and reorder controls only for editable custom tempos', () => {
+  it('shows remove and reorder controls for every tempo', () => {
     const custom = mount(TempoButton, { props: { bpm: 120, active: false, editing: true } })
     const preset = mount(TempoButton, { props: { bpm: 100, active: false, editing: true, preset: true } })
 
-    expect(custom.find('[aria-label="Remove 120 BPM"]').exists()).toBe(true)
-    expect(preset.find('[aria-label="Remove 100 BPM"]').exists()).toBe(false)
-    expect(preset.find('.preset-lock').exists()).toBe(true)
+    expect(custom.find('[aria-label="Remove 120 BPM from dashboard"]').exists()).toBe(true)
+    expect(preset.find('[aria-label="Remove 100 BPM from dashboard"]').exists()).toBe(true)
+    expect(preset.find('.preset-lock').exists()).toBe(false)
   })
 
   it('reports pointer movement after a long press for drag reordering', async () => {
@@ -104,7 +104,7 @@ describe('TempoButton', () => {
     expect(wrapper.emitted('dragmove')).toEqual([[{ x: 35, y: 60 }]])
   })
 
-  it('does not make built-in tempos draggable in edit mode', async () => {
+  it('makes built-in tempos draggable in edit mode', async () => {
     const wrapper = mount(TempoButton, {
       props: { bpm: 100, active: false, editing: true, preset: true },
     })
@@ -114,7 +114,7 @@ describe('TempoButton', () => {
     await button.trigger('pointermove', { pointerId: 1, clientX: 20, clientY: 30 })
     await button.trigger('pointerup', { pointerId: 1 })
 
-    expect(wrapper.emitted('dragmove')).toBeUndefined()
+    expect(wrapper.emitted('dragmove')).toEqual([[{ x: 20, y: 30 }]])
   })
 
   it('marks the tempo being dragged', async () => {
@@ -127,11 +127,11 @@ describe('TempoButton', () => {
     expect(wrapper.classes()).toContain('dragging')
   })
 
-  it('identifies only custom tempos as drag targets', () => {
+  it('identifies every dashboard tempo as a drag target', () => {
     const custom = mount(TempoButton, { props: { bpm: 120, active: false } })
     const builtIn = mount(TempoButton, { props: { bpm: 100, active: false, preset: true } })
 
-    expect(custom.attributes('data-custom-tempo')).toBe('')
-    expect(builtIn.attributes()).not.toHaveProperty('data-custom-tempo')
+    expect(custom.attributes('data-dashboard-tempo')).toBe('')
+    expect(builtIn.attributes('data-dashboard-tempo')).toBe('')
   })
 })

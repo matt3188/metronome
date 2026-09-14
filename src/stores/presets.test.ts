@@ -39,4 +39,35 @@ describe('presets store', () => {
     store.remove(120)
     expect(store.pitches[120]).toBeUndefined()
   })
+  it('persists dashboard ordering and restores removed built-in tempos', () => {
+    const store = usePresetsStore()
+    store.add(80)
+    store.moveDashboard(80, -1)
+    store.removeFromDashboard(50)
+
+    expect(store.dashboardTempos).toEqual([80, 100])
+    expect(store.removedTempos).toEqual([50])
+    expect(localStorage.getItem('metronome-dashboard-tempos')).toBe('[80,100,"custom"]')
+
+    store.restoreBuiltIn(50)
+    expect(store.dashboardTempos).toEqual([80, 100, 50])
+
+    store.moveDashboardTo('custom', 80)
+    expect(store.dashboardItems).toEqual(['custom', 100, 50, 80])
+    expect(localStorage.getItem('metronome-dashboard-tempos')).toBe('["custom",100,50,80]')
+  })
+  it('moves a hidden custom tempo to the tray without deleting its saved settings', () => {
+    const store = usePresetsStore()
+    store.add(135, 'low')
+
+    store.removeFromDashboard(135)
+
+    expect(store.removedTempos).toContain(135)
+    expect(store.tempos).toContain(135)
+    expect(store.pitches[135]).toBe('low')
+
+    store.restoreTempo(135)
+    expect(store.dashboardTempos).toContain(135)
+    expect(store.removedTempos).not.toContain(135)
+  })
 })
