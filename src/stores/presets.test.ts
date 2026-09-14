@@ -52,4 +52,18 @@ describe('presets store', () => {
     store.restoreBuiltIn(50)
     expect(store.dashboardTempos).toEqual([80, 100, 50])
   })
+  it('restores custom pitch and dashboard state together after a reload', () => {
+    const store = usePresetsStore()
+    store.add(120, 'low')
+    store.moveDashboard(120, -1)
+    store.removeFromDashboard(50)
+
+    setActivePinia(createPinia())
+    const restoredStore = usePresetsStore()
+
+    expect(restoredStore.tempos).toEqual([120])
+    expect(restoredStore.pitches).toEqual({ 120: 'low' })
+    expect(restoredStore.dashboardItems).toEqual([120, 100, 'custom'])
+    expect(restoredStore.removedBuiltIns).toEqual([50])
+  })
 })
