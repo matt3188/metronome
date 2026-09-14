@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref } from 'vue'
 
-defineProps<{
+const props = defineProps<{
   bpm: number
   active: boolean
   label?: string
@@ -21,6 +21,13 @@ const startHold = (event: PointerEvent) => {
   held.value = false
   pointerId = event.pointerId
   holdTarget = event.currentTarget as HTMLElement
+
+  if (props.editing && !props.preset) {
+    held.value = true
+    holdTarget.setPointerCapture?.(pointerId)
+    return
+  }
+
   timer = setTimeout(() => {
     held.value = true
     holdTarget?.setPointerCapture?.(pointerId!)
