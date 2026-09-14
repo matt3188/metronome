@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { ref } from 'vue'
+import CustomCog from '../components/CustomCog.vue'
 import TempoButton from '../components/TempoButton.vue'
 import { BUILT_IN_TEMPOS } from '../constants/tempos'
 import { useMetronomeStore } from '../stores/metronome'
@@ -73,7 +74,10 @@ const dragTempo = (tempo: number, point: { x: number; y: number }) => {
         @dragend="draggingTempo = undefined"
       />
       <article v-else class="tempo-card-wrap custom-tile" :class="{ editing }">
-        <RouterLink to="/custom" class="custom-card" :aria-disabled="editing" @click="editing && $event.preventDefault()"><span class="plus">＋</span><strong>Custom</strong><small>Set your own pace</small></RouterLink>
+        <RouterLink to="/custom" class="custom-card" :aria-disabled="editing" @click="editing && $event.preventDefault()">
+          <CustomCog />
+          <strong>Custom</strong><small>Set your own pace</small>
+        </RouterLink>
         <div v-if="editing" class="tempo-actions custom-tempo-actions" aria-label="Custom tile controls">
           <button type="button" :disabled="index === 0" aria-label="Move Custom tile earlier" @click="presets.moveDashboardItem(CUSTOM_TILE, -1)">←</button>
           <button type="button" :disabled="index === presets.dashboardItems.length - 1" aria-label="Move Custom tile later" @click="presets.moveDashboardItem(CUSTOM_TILE, 1)">→</button>
