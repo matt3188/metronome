@@ -1,0 +1,81 @@
+name: Keep pull requests up to date
+
+on:
+  push:
+    branches:
+      - main
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: keep-prs-up-to-date
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Merge main into open pull requests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update pull request branches
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const eventPullRequest = context.payload.pull_request
+            const pullRequests = eventPullRequest
+              ? [eventPullRequest]
+              : await github.paginate(github.rest.pulls.list, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: 'open',
+                  base: 'main',
+                  per_page: 100,
+                })
+
+            const results = []
+
+            for (const pullRequest of pullRequests) {
+              if (pullRequest.base.ref !== 'main') continue
+
+              if (pullRequest.draft) {
+                results.push(`- #${pullRequest.number}: skipped (draft)`)
+                continue
+              }
+
+              const comesFromFork = pullRequest.head.repo.full_name !== pullRequest.base.repo.full_name
+              if (comesFromFork && !pullRequest.maintainer_can_modify) {
+                results.push(`- #${pullRequest.number}: skipped (maintainer updates disabled)`)
+                continue
+              }
+
+              try {
+                await github.rest.pulls.updateBranch({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pullRequest.number,
+                  expected_head_sha: pullRequest.head.sha,
+                })
+                results.push(`- #${pullRequest.number}: update requested`)
+              } catch (error) {
+                if (error.status === 422) {
+                  results.push(`- #${pullRequest.number}: already current or needs a manual semantic resolution`)
+                  continue
+                }
+
+                throw error
+              }
+            }
+
+            await core.summary
+              .addHeading('Pull request branch updates')
+              .addRaw(results.length > 0 ? results.join('\n') : 'No eligible pull requests found.')
+              .write()
