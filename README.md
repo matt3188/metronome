@@ -22,6 +22,13 @@ Run the test suite with `./scripts/npm test` and create a production build with
 
 Open the local URL printed by Vite (normally `http://localhost:5173`) to see the app. Pick a tempo card to begin playback; the header status and persistent now-playing bar show the active BPM and current beat, and provide a stop control from either screen.
 
+Open, non-draft pull requests targeting `main` are automatically updated after
+`main` changes and every six hours. Contributors must leave **Allow edits from
+maintainers** enabled. For same-repository branches with conflicts, the workflow
+merges `main` while retaining the pull request's version of overlapping hunks;
+the normal validation workflow then tests the merged result. Conflicts in forks
+are reported because the repository token cannot push to a contributor's fork.
+
 ## Architecture
 
 - `src/services/metronome.ts` owns the single Web Audio scheduler.
