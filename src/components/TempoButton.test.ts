@@ -36,10 +36,17 @@ describe('TempoButton', () => {
     await button.trigger('pointerdown', { pointerId: 1 })
     await vi.advanceTimersByTimeAsync(550)
     await button.trigger('pointermove', { clientX: 20, clientY: 30 })
+
+    expect(wrapper.classes()).toContain('dragging')
+    expect(wrapper.attributes('style')).toContain('--drag-x: 20px')
+    expect(wrapper.attributes('style')).toContain('--drag-y: 30px')
+
     await button.trigger('pointerup', { pointerId: 1 })
 
     expect(wrapper.emitted('dragmove')).toEqual([[{ x: 20, y: 30 }]])
     expect(wrapper.emitted('dragend')).toHaveLength(1)
+    expect(wrapper.classes()).not.toContain('dragging')
+    expect(wrapper.attributes('style')).toBeUndefined()
   })
 
   it('starts dragging custom tempos immediately while in edit mode', async () => {
