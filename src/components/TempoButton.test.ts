@@ -42,6 +42,37 @@ describe('TempoButton', () => {
     expect(wrapper.emitted('dragend')).toHaveLength(1)
   })
 
+  it('starts dragging custom tempos immediately while in edit mode', async () => {
+    vi.useFakeTimers()
+    const wrapper = mount(TempoButton, {
+      props: { bpm: 120, active: false, editing: true },
+    })
+    const button = wrapper.get('.tempo-card')
+
+    await button.trigger('pointerdown', { pointerId: 1 })
+    await button.trigger('pointermove', { pointerId: 1, clientX: 20, clientY: 30 })
+    await button.trigger('pointerup', { pointerId: 1 })
+    await button.trigger('click')
+
+    expect(wrapper.emitted('dragmove')).toEqual([[{ x: 20, y: 30 }]])
+    expect(wrapper.emitted('dragend')).toHaveLength(1)
+    expect(wrapper.emitted('longpress')).toBeUndefined()
+    expect(wrapper.emitted('press')).toBeUndefined()
+  })
+
+  it('does not make built-in tempos draggable in edit mode', async () => {
+    const wrapper = mount(TempoButton, {
+      props: { bpm: 100, active: false, editing: true, preset: true },
+    })
+    const button = wrapper.get('.tempo-card')
+
+    await button.trigger('pointerdown', { pointerId: 1 })
+    await button.trigger('pointermove', { pointerId: 1, clientX: 20, clientY: 30 })
+    await button.trigger('pointerup', { pointerId: 1 })
+
+    expect(wrapper.emitted('dragmove')).toBeUndefined()
+  })
+
   it('marks the tempo being dragged', async () => {
     const wrapper = mount(TempoButton, {
       props: { bpm: 120, active: false, editing: true, canMoveLater: true },
