@@ -14,10 +14,19 @@ const { theme } = storeToRefs(themeStore)
     <header>
       <RouterLink to="/" class="brand" aria-label="Metronome home"><span class="brand-dot" />METRONOME</RouterLink>
       <div class="header-actions">
-        <div class="app-status" :class="{ active: isPlaying }" role="status" aria-live="polite">
-          <span class="status-light" />
-          {{ isPlaying ? `Playing · ${bpm} BPM` : 'Ready' }}
-        </div>
+        <button
+          class="playback-toggle"
+          type="button"
+          role="switch"
+          :aria-checked="isPlaying"
+          :aria-label="isPlaying ? 'Pause metronome' : 'Play metronome'"
+          :title="isPlaying ? 'Pause metronome' : 'Play metronome'"
+          @click="metronome.toggle()"
+        >
+          <span class="playback-option playback-option-play" aria-hidden="true">Play</span>
+          <span class="playback-option playback-option-pause" aria-hidden="true">Pause</span>
+          <span class="playback-toggle-thumb" aria-hidden="true">{{ isPlaying ? 'Ⅱ' : '▶' }}</span>
+        </button>
         <button
           class="pitch-toggle"
           type="button"
@@ -67,15 +76,6 @@ const { theme } = storeToRefs(themeStore)
       <div class="beat-track" aria-label="Four beat measure">
         <span v-for="index in 4" :key="index" :class="{ active: isPlaying && beat % 4 === index - 1 }" />
       </div>
-      <button
-        class="global-playback-button"
-        type="button"
-        :aria-label="isPlaying ? 'Pause metronome' : 'Play metronome'"
-        :aria-pressed="isPlaying"
-        @click="metronome.toggle()"
-      >
-        <span aria-hidden="true">{{ isPlaying ? 'Ⅱ' : '▶' }}</span>
-      </button>
     </aside>
     <footer>Keep time. Find your rhythm.</footer>
   </div>
