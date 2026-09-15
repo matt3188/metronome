@@ -23,8 +23,8 @@ describe('TempoButton', () => {
     const custom = mount(TempoButton, { props: { bpm: 120, active: false, editing: true } })
     const preset = mount(TempoButton, { props: { bpm: 100, active: false, editing: true, preset: true } })
 
-    expect(custom.find('[aria-label="Remove 120 BPM"]').exists()).toBe(true)
-    expect(preset.find('[aria-label="Remove 100 BPM"]').exists()).toBe(true)
+    expect(custom.find('[aria-label="Remove 120 BPM from dashboard"]').exists()).toBe(true)
+    expect(preset.find('[aria-label="Remove 100 BPM from dashboard"]').exists()).toBe(true)
     expect(preset.find('.preset-lock').exists()).toBe(false)
   })
 
