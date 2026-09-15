@@ -25,26 +25,28 @@ jobs:
   update:
     name: Merge main into open pull requests
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
+      - name: Check out the trusted base branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Update pull request branches
         uses: actions/github-script@v7
         with:
           script: |
-            // Always sweep the complete queue. Limiting pull_request_target runs to
-            // the event PR could leave older branches stale until the next cron run.
-            const pullRequests = await github.paginate(github.rest.pulls.list, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              base: 'main',
-              sort: 'created',
-              direction: 'asc',
-              per_page: 100,
-            })
+            const eventPullRequest = context.payload.pull_request
+            const pullRequests = eventPullRequest
+              ? [eventPullRequest]
+              : await github.paginate(github.rest.pulls.list, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: 'open',
+                  base: 'main',
+                  per_page: 100,
+                })
 
             const results = []
-            const failures = []
 
             for (const pullRequest of pullRequests) {
               if (pullRequest.base.ref !== 'main') continue
@@ -69,20 +71,41 @@ jobs:
                 })
                 results.push(`- #${pullRequest.number}: update requested`)
               } catch (error) {
-                if (error.status === 422) {
-                  // The endpoint uses 422 both when no update is necessary and when
-                  // GitHub cannot create the merge. Report the server's explanation
-                  // so the owner can tell those cases apart in the morning summary.
-                  const reason = error.response?.data?.message ?? error.message
-                  results.push(`- #${pullRequest.number}: not updated (${reason})`)
+                if (error.status !== 422) throw error
+
+                // GitHub's update-branch endpoint refuses branches with conflicts.
+                // For same-repository PRs, merge locally and consistently keep the
+                // PR side of conflicting hunks. Non-conflicting main changes still
+                // merge normally, and the validation workflow checks the result.
+                if (comesFromFork) {
+                  results.push(`- #${pullRequest.number}: cannot resolve conflicts in a fork`)
                   continue
                 }
 
-                // Do not let one inaccessible or transiently broken branch prevent
-                // every later PR from being processed.
-                const reason = error.response?.data?.message ?? error.message
-                failures.push(`#${pullRequest.number}: ${reason}`)
-                results.push(`- #${pullRequest.number}: failed (${reason})`)
+                await exec.exec('git', ['fetch', 'origin', 'main', pullRequest.head.sha])
+                await exec.exec('git', ['checkout', '--detach', pullRequest.head.sha])
+
+                const ancestry = await exec.getExecOutput(
+                  'git',
+                  ['merge-base', '--is-ancestor', 'origin/main', 'HEAD'],
+                  { ignoreReturnCode: true },
+                )
+                if (ancestry.exitCode === 0) {
+                  results.push(`- #${pullRequest.number}: already current`)
+                  continue
+                }
+
+                await exec.exec('git', [
+                  '-c', 'user.name=github-actions[bot]',
+                  '-c', 'user.email=41898282+github-actions[bot]@users.noreply.github.com',
+                  'merge', '--no-edit', '-X', 'ours', 'origin/main',
+                ])
+                await exec.exec('git', [
+                  'push',
+                  'origin',
+                  `HEAD:refs/heads/${pullRequest.head.ref}`,
+                ])
+                results.push(`- #${pullRequest.number}: conflicts resolved; PR version kept for overlapping hunks`)
               }
             }
 
@@ -90,7 +113,3 @@ jobs:
               .addHeading('Pull request branch updates')
               .addRaw(results.length > 0 ? results.join('\n') : 'No eligible pull requests found.')
               .write()
-
-            if (failures.length > 0) {
-              core.setFailed(`Failed to update ${failures.length} pull request(s): ${failures.join('; ')}`)
-            }

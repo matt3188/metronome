@@ -44,7 +44,8 @@ export const usePresetsStore = defineStore('presets', {
   },
   getters: {
     dashboardTempos: state => state.dashboardItems.filter((item): item is number => typeof item === 'number'),
-    removedBuiltIns: state => BUILT_IN_TEMPOS.filter(tempo => !state.dashboardItems.includes(tempo)),
+    removedTempos: state => [...BUILT_IN_TEMPOS, ...state.tempos]
+      .filter(tempo => !state.dashboardItems.includes(tempo)),
   },
   actions: {
     add(bpm: number, pitch: MetronomePitch = 'high') {
@@ -69,16 +70,18 @@ export const usePresetsStore = defineStore('presets', {
       localStorage.setItem(DASHBOARD_KEY, JSON.stringify(this.dashboardItems))
     },
     removeFromDashboard(bpm: number) {
-      if (isBuiltInTempo(bpm)) {
-        this.dashboardItems = this.dashboardItems.filter(value => value !== bpm)
-        localStorage.setItem(DASHBOARD_KEY, JSON.stringify(this.dashboardItems))
-      } else this.remove(bpm)
+      this.dashboardItems = this.dashboardItems.filter(value => value !== bpm)
+      localStorage.setItem(DASHBOARD_KEY, JSON.stringify(this.dashboardItems))
     },
-    restoreBuiltIn(bpm: number) {
-      if (!isBuiltInTempo(bpm) || this.dashboardItems.includes(bpm)) return
+    restoreTempo(bpm: number) {
+      const exists = isBuiltInTempo(bpm) || this.tempos.includes(bpm)
+      if (!exists || this.dashboardItems.includes(bpm)) return
       const customIndex = this.dashboardItems.indexOf(CUSTOM_TILE)
       this.dashboardItems.splice(customIndex < 0 ? this.dashboardItems.length : customIndex, 0, bpm)
       localStorage.setItem(DASHBOARD_KEY, JSON.stringify(this.dashboardItems))
+    },
+    restoreBuiltIn(bpm: number) {
+      this.restoreTempo(bpm)
     },
     moveDashboard(bpm: number, direction: -1 | 1) {
       this.moveDashboardItem(bpm, direction)
@@ -98,8 +101,7 @@ export const usePresetsStore = defineStore('presets', {
       const to = this.dashboardItems.indexOf(targetItem)
       if (from === -1 || to === -1 || from === to) return
       const reordered = [...this.dashboardItems]
-      const [tempo] = reordered.splice(from, 1)
-      reordered.splice(to, 0, tempo)
+      ;[reordered[from], reordered[to]] = [reordered[to], reordered[from]]
       this.dashboardItems = reordered
       localStorage.setItem(DASHBOARD_KEY, JSON.stringify(this.dashboardItems))
     },

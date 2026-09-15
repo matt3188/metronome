@@ -20,14 +20,34 @@ can permanently fix the environment instead by replacing
 Run the test suite with `./scripts/npm test` and create a production build with
 `./scripts/npm run build`.
 
+## Preparing a pull request
+
+After committing your work, run `npm run prepare:pr`. The command fetches
+`origin/main`, merges it into the current branch, and runs all validation checks
+before a pull request is created. Ordinary conflicts are resolved automatically
+in favor of the pull request branch, while non-conflicting changes from `main`
+are retained. This keeps each pull request current without a separate conflict
+cleanup round.
+
+Use `PR_REMOTE=upstream` or pass a base branch as an argument (for example,
+`npm run prepare:pr -- release`) when the repository does not use
+`origin/main`.
+
+The repository also updates every open, same-repository pull request whenever
+`main` changes, when a pull request is opened, every six hours, and on manual
+dispatch. It uses the same predictable rule: the pull request wins overlapping
+conflicts, while non-conflicting changes from `main` are merged normally. Fork
+branches are reported but not modified because the repository token cannot
+safely push to them.
+
 Open the local URL printed by Vite (normally `http://localhost:5173`) to see the app. Pick a tempo card to begin playback; the header status and persistent now-playing bar show the active BPM and current beat, and provide a stop control from either screen.
 
-Open, non-draft pull requests targeting `main` are automatically updated when
-pull-request activity or a `main` change starts the workflow, and every six
-hours. Each run sweeps the entire open queue, continues past individual API
-failures, and leaves a complete job summary. Contributors must leave **Allow
-edits from maintainers** enabled. The workflow reports branches that GitHub
-cannot update rather than applying an unsafe automatic conflict resolution.
+Open, non-draft pull requests targeting `main` are automatically updated after
+`main` changes and every six hours. Contributors must leave **Allow edits from
+maintainers** enabled. For same-repository branches with conflicts, the workflow
+merges `main` while retaining the pull request's version of overlapping hunks;
+the normal validation workflow then tests the merged result. Conflicts in forks
+are reported because the repository token cannot push to a contributor's fork.
 
 ## Architecture
 

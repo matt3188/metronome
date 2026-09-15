@@ -17,68 +17,58 @@ const held = ref(false)
 const dragOffset = ref({ x: 0, y: 0 })
 let timer: ReturnType<typeof setTimeout> | undefined
 let pointerId: number | undefined
-let holdTarget: HTMLElement | undefined
 let holdOrigin: { x: number; y: number } | undefined
 let suppressPress = false
-let touchPointer = false
-let suppressClickTimer: ReturnType<typeof setTimeout> | undefined
-const isDragging = computed(() => held.value)
+const isDragging = computed(() => held.value && !props.preset)
 const dragStyle = computed(() => isDragging.value
   ? { '--drag-x': `${dragOffset.value.x}px`, '--drag-y': `${dragOffset.value.y}px` }
   : undefined)
+const removePointerListeners = () => {
+  window.removeEventListener('pointermove', drag)
+  window.removeEventListener('pointerup', cancelHold)
+  window.removeEventListener('pointercancel', cancelHold)
+}
 const startHold = (event: PointerEvent) => {
-  // Stop mobile browsers from turning a long press into text selection or a
-  // callout. Touch taps are emitted on pointerup because this cancels the
-  // browser's compatibility click on some devices.
-  touchPointer = event.pointerType === 'touch' || event.pointerType === 'pen'
-  if (touchPointer) event.preventDefault()
+  if (pointerId !== undefined) return
   held.value = false
   suppressPress = false
   dragOffset.value = { x: 0, y: 0 }
   pointerId = event.pointerId
-  holdTarget = event.currentTarget as HTMLElement
   holdOrigin = { x: event.clientX ?? 0, y: event.clientY ?? 0 }
+  window.addEventListener('pointermove', drag, { passive: false })
+  window.addEventListener('pointerup', cancelHold)
+  window.addEventListener('pointercancel', cancelHold)
 
   if (props.editing) {
     held.value = true
-    holdTarget.setPointerCapture?.(pointerId)
     return
   }
 
   timer = setTimeout(() => {
     held.value = true
-    holdTarget?.setPointerCapture?.(pointerId!)
     emit('longpress')
   }, 550)
 }
-const cancelHold = (event?: PointerEvent) => {
+function cancelHold(event?: PointerEvent) {
+  if (event && pointerId !== undefined && event.pointerId !== pointerId) return
   if (timer) clearTimeout(timer)
   timer = undefined
   const wasHeld = held.value
   held.value = false
   suppressPress = wasHeld
   if (wasHeld && event) emit('dragend')
-  if (!wasHeld && event && touchPointer) {
-    emit('press')
-    suppressPress = true
-  }
-  if (suppressClickTimer) clearTimeout(suppressClickTimer)
-  if (suppressPress) suppressClickTimer = setTimeout(() => { suppressPress = false }, 500)
-  if (pointerId !== undefined && holdTarget?.hasPointerCapture?.(pointerId)) holdTarget.releasePointerCapture?.(pointerId)
+  removePointerListeners()
   pointerId = undefined
-  holdTarget = undefined
   holdOrigin = undefined
-  touchPointer = false
   dragOffset.value = { x: 0, y: 0 }
 }
-const drag = (event: PointerEvent) => {
+function drag(event: PointerEvent) {
+  if (pointerId === undefined || event.pointerId !== pointerId) return
   if (held.value && holdOrigin) {
+    event.preventDefault()
     dragOffset.value = { x: event.clientX - holdOrigin.x, y: event.clientY - holdOrigin.y }
     emit('dragmove', { x: event.clientX, y: event.clientY })
   }
-}
-const leave = (event: PointerEvent) => {
-  if (!held.value) cancelHold(event)
 }
 const press = () => {
   if (held.value || suppressPress) {
@@ -108,11 +98,6 @@ onBeforeUnmount(() => {
       :aria-label="`${bpm} BPM${editing ? (preset ? ', preset tempo' : ', custom tempo') : ''}`"
       @click="press"
       @pointerdown="startHold"
-      @pointermove="drag"
-      @pointerup="cancelHold"
-      @pointercancel="cancelHold"
-      @pointerleave="leave"
-      @selectstart.prevent
       @contextmenu.prevent
       draggable="false"
     >
@@ -120,9 +105,9 @@ onBeforeUnmount(() => {
       <span class="play-icon" aria-hidden="true">{{ active ? 'Ⅱ' : '▶' }}</span>
       <span class="tempo-label">{{ editing ? (preset ? 'Preset tempo' : 'Custom tempo') : (label ?? 'Tap to play') }}</span>
     </button>
-    <div v-if="editing" class="tempo-actions" :aria-label="`${bpm} BPM tempo controls`">
+    <button v-if="editing" type="button" class="remove-tempo" :aria-label="`Remove ${bpm} BPM from dashboard`" @click="$emit('remove')">−</button>
+    <div v-if="editing" class="tempo-actions" :aria-label="`${bpm} BPM reorder controls`">
       <button type="button" :disabled="!canMoveEarlier" :aria-label="`Move ${bpm} BPM earlier`" @click="$emit('move', -1)">←</button>
-      <button type="button" class="remove-tempo" :aria-label="`Remove ${bpm} BPM`" @click="$emit('remove')">×</button>
       <button type="button" :disabled="!canMoveLater" :aria-label="`Move ${bpm} BPM later`" @click="$emit('move', 1)">→</button>
     </div>
   </article>

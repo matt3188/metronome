@@ -2,6 +2,7 @@
 import { storeToRefs } from 'pinia'
 import { onBeforeUnmount, ref } from 'vue'
 import TempoButton from '../components/TempoButton.vue'
+import { useDashboardDrag } from '../composables/useDashboardDrag'
 import { BUILT_IN_TEMPOS } from '../constants/tempos'
 import { useMetronomeStore } from '../stores/metronome'
 import { CUSTOM_TILE, usePresetsStore, type DashboardItem } from '../stores/presets'
@@ -151,25 +152,8 @@ onBeforeUnmount(() => endCustomDrag())
       </article>
     </template>
   </section>
-  <section v-if="editing && presets.removedBuiltIns.length" class="removed-presets" aria-label="Removed preset tempos">
-    <div><strong>Removed presets</strong><small>Restore a preset to your dashboard.</small></div>
-    <button v-for="tempo in presets.removedBuiltIns" :key="tempo" type="button" @click="presets.restoreBuiltIn(tempo)">＋ {{ tempo }} BPM</button>
+  <section v-if="editing && presets.removedTempos.length" class="removed-presets" aria-label="Removed tempo tray">
+    <div><strong>Removed tempos</strong><small>Add a tempo back to your dashboard.</small></div>
+    <button v-for="tempo in presets.removedTempos" :key="tempo" type="button" :aria-label="`Restore ${tempo} BPM`" @click="presets.restoreTempo(tempo)">＋ {{ tempo }} BPM</button>
   </section>
 </template>
-
-<style scoped>
-.custom-cog {
-  position: absolute;
-  top: 25px;
-  left: 50%;
-  width: 76px;
-  height: 76px;
-  transform: translateX(-50%);
-  fill: none;
-  stroke: var(--lime);
-  stroke-width: 1.35;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  filter: drop-shadow(0 0 14px color-mix(in srgb, var(--lime) 28%, transparent));
-}
-</style>
