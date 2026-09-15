@@ -40,10 +40,10 @@ describe('HomeView', () => {
     expect(wrapper.findAll('.preset-lock')).toHaveLength(0)
     expect(wrapper.findAll('.tempo-actions')).toHaveLength(4)
     expect(wrapper.get('[data-tempo="50"] .remove-tempo').attributes('aria-label')).toBe(
-      'Remove 50 BPM',
+      'Remove 50 BPM from dashboard',
     )
     expect(wrapper.get('[data-tempo="80"] .remove-tempo').attributes('aria-label')).toBe(
-      'Remove 80 BPM',
+      'Remove 80 BPM from dashboard',
     )
     expect(wrapper.find('.custom-tile .remove-tempo').exists()).toBe(false)
 
@@ -141,5 +141,45 @@ describe('HomeView', () => {
 
     await wrapper.get('.removed-presets button').trigger('click')
     expect(usePresetsStore().dashboardTempos).toEqual([100, 50])
+  })
+
+  it('reorders from card geometry when mobile hit testing only returns the captured tile', async () => {
+    localStorage.setItem('metronome-presets', '[80,120]')
+    setActivePinia(createPinia())
+
+    const wrapper = mount(HomeView, {
+      attachTo: document.body,
+      global: {
+        stubs: {
+          RouterLink: { template: '<a><slot /></a>' },
+        },
+      },
+    })
+    const cards = wrapper.findAllComponents(TempoButton)
+    const draggedCard = cards.find(card => card.props('bpm') === 80)!.element
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+      const isTarget = this.dataset.tempo === '120'
+      return {
+        left: isTarget ? 100 : 0,
+        right: isTarget ? 200 : 0,
+        top: isTarget ? 100 : 0,
+        bottom: isTarget ? 300 : 0,
+        width: isTarget ? 100 : 0,
+        height: isTarget ? 200 : 0,
+        x: isTarget ? 100 : 0,
+        y: isTarget ? 100 : 0,
+        toJSON: () => ({}),
+      }
+    })
+    Object.defineProperty(document, 'elementsFromPoint', {
+      configurable: true,
+      value: vi.fn(() => [draggedCard]),
+    })
+
+    cards.find(card => card.props('bpm') === 80)!.vm.$emit('dragmove', { x: 150, y: 200 })
+    await wrapper.vm.$nextTick()
+
+    expect(usePresetsStore().tempos).toEqual([120, 80])
+    wrapper.unmount()
   })
 })

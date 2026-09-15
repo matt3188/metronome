@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { ref } from 'vue'
+import CustomTile from '../components/CustomTile.vue'
 import TempoButton from '../components/TempoButton.vue'
+import { useDashboardDrag } from '../composables/useDashboardDrag'
 import { BUILT_IN_TEMPOS } from '../constants/tempos'
 import { useMetronomeStore } from '../stores/metronome'
 import { CUSTOM_TILE, usePresetsStore } from '../stores/presets'
+import type { DashboardItem } from '../stores/presets'
 
 const metronome = useMetronomeStore()
 const presets = usePresetsStore()
 const { bpm, pitch } = storeToRefs(metronome)
 const editing = ref(false)
-const draggingTempo = ref<number>()
+const draggingItem = ref<DashboardItem>()
 const setEditing = (value: boolean) => {
   editing.value = value
   if (!value) draggingTempo.value = undefined
@@ -21,14 +24,14 @@ const tempoAtPoint = (tempo: number, point: { x: number; y: number }) => {
     ?? (topElement ? [topElement] : [])
 
   const hitTarget = elements
-    .map(element => element.closest<HTMLElement>('[data-dashboard-tempo]'))
+    .map(element => element.closest<HTMLElement>('[data-custom-tempo]'))
     .find(element => element && Number(element.dataset.tempo) !== tempo)
   if (hitTarget) return hitTarget
 
   // Some mobile browsers return only the pointer-captured (dragged) element from
   // elementsFromPoint. Checking the other cards' geometry keeps reordering
   // working while the dragged tile is rendered above them.
-  return [...document.querySelectorAll<HTMLElement>('[data-dashboard-tempo]')]
+  return [...document.querySelectorAll<HTMLElement>('[data-custom-tempo]')]
     .filter(element => Number(element.dataset.tempo) !== tempo)
     .find(element => {
       const bounds = element.getBoundingClientRect()
@@ -41,7 +44,7 @@ const dragTempo = (tempo: number, point: { x: number; y: number }) => {
   const target = tempoAtPoint(tempo, point)
   if (!target) return
   const targetTempo = Number(target.dataset.tempo)
-  presets.moveDashboardTo(tempo, targetTempo)
+  presets.moveTo(tempo, targetTempo)
 }
 </script>
 <template>
@@ -61,7 +64,7 @@ const dragTempo = (tempo: number, point: { x: number; y: number }) => {
         :active="bpm === item && pitch === (presets.pitches[item] ?? 'high')"
         :editing="editing"
         :preset="BUILT_IN_TEMPOS.includes(item as 50 | 100)"
-        :dragging="draggingTempo === item"
+        :dragging="draggingItem === item"
         :can-move-earlier="index > 0"
         :can-move-later="index < presets.dashboardItems.length - 1"
         :label="`${presets.pitches[item] ?? 'high'} pitch`"
@@ -69,20 +72,14 @@ const dragTempo = (tempo: number, point: { x: number; y: number }) => {
         @press="editing ? undefined : metronome.select(item, presets.pitches[item] ?? 'high')"
         @remove="presets.removeFromDashboard(item)"
         @move="presets.moveDashboard(item, $event)"
-        @dragmove="dragTempo(item, $event)"
-        @dragend="draggingTempo = undefined"
+        @dragmove="dragItem(item, $event)"
+        @dragend="draggingItem = undefined"
       />
-      <article v-else class="tempo-card-wrap custom-tile" :class="{ editing }">
-        <RouterLink to="/custom" class="custom-card" :aria-disabled="editing" @click="editing && $event.preventDefault()"><span class="plus">＋</span><strong>Custom</strong><small>Set your own pace</small></RouterLink>
-        <div v-if="editing" class="tempo-actions custom-tempo-actions" aria-label="Custom tile controls">
-          <button type="button" :disabled="index === 0" aria-label="Move Custom tile earlier" @click="presets.moveDashboardItem(CUSTOM_TILE, -1)">←</button>
-          <button type="button" :disabled="index === presets.dashboardItems.length - 1" aria-label="Move Custom tile later" @click="presets.moveDashboardItem(CUSTOM_TILE, 1)">→</button>
-        </div>
-      </article>
+      <CustomTile v-else :editing="editing" :dragging="draggingItem === CUSTOM_TILE" :can-move-earlier="index > 0" :can-move-later="index < presets.dashboardItems.length - 1" @move="presets.moveDashboardItem(CUSTOM_TILE, $event)" @dragmove="dragItem(CUSTOM_TILE, $event)" @dragend="draggingItem = undefined" />
     </template>
   </section>
-  <section v-if="editing && presets.removedBuiltIns.length" class="removed-presets" aria-label="Removed preset tempos">
-    <div><strong>Removed presets</strong><small>Restore a preset to your dashboard.</small></div>
-    <button v-for="tempo in presets.removedBuiltIns" :key="tempo" type="button" @click="presets.restoreBuiltIn(tempo)">＋ {{ tempo }} BPM</button>
+  <section v-if="editing && presets.removedTempos.length" class="removed-presets" aria-label="Removed tempo tray">
+    <div><strong>Removed tempos</strong><small>Add a tempo back to your dashboard.</small></div>
+    <button v-for="tempo in presets.removedTempos" :key="tempo" type="button" :aria-label="`Restore ${tempo} BPM`" @click="presets.restoreTempo(tempo)">＋ {{ tempo }} BPM</button>
   </section>
 </template>
