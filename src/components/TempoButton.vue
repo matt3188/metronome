@@ -89,6 +89,7 @@ onBeforeUnmount(() => {
     :class="{ editing, preset, dragging: dragging || isDragging }"
     :style="dragStyle"
     :data-tempo="bpm"
+    :data-dashboard-item="bpm"
     data-dashboard-tempo
   >
     <button
@@ -105,9 +106,9 @@ onBeforeUnmount(() => {
       <span class="play-icon" aria-hidden="true">{{ active ? 'Ⅱ' : '▶' }}</span>
       <span class="tempo-label">{{ editing ? (preset ? 'Preset tempo' : 'Custom tempo') : (label ?? 'Tap to play') }}</span>
     </button>
-    <div v-if="editing" class="tempo-actions" :aria-label="`${bpm} BPM tempo controls`">
+    <button v-if="editing" type="button" class="remove-tempo" :aria-label="`Remove ${bpm} BPM from dashboard`" @click="$emit('remove')">−</button>
+    <div v-if="editing" class="tempo-actions" :aria-label="`${bpm} BPM reorder controls`">
       <button type="button" :disabled="!canMoveEarlier" :aria-label="`Move ${bpm} BPM earlier`" @click="$emit('move', -1)">←</button>
-      <button type="button" class="remove-tempo" :aria-label="`Remove ${bpm} BPM`" @click="$emit('remove')">×</button>
       <button type="button" :disabled="!canMoveLater" :aria-label="`Move ${bpm} BPM later`" @click="$emit('move', 1)">→</button>
     </div>
   </article>

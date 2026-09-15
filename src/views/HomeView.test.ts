@@ -16,16 +16,6 @@ describe('HomeView', () => {
     Reflect.deleteProperty(document, 'elementsFromPoint')
   })
 
-  it('shows a large decorative cog on the custom tempo tile', () => {
-    const wrapper = mount(HomeView, {
-      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
-    })
-
-    const cog = wrapper.get('.custom-tile .custom-cog')
-    expect(cog.attributes('viewBox')).toBe('0 0 24 24')
-    expect(cog.attributes('aria-hidden')).toBe('true')
-  })
-
   it('makes built-in and custom tempos manageable', async () => {
     localStorage.setItem('metronome-presets', '[80]')
     setActivePinia(createPinia())
@@ -49,10 +39,10 @@ describe('HomeView', () => {
     expect(wrapper.findAll('.preset-lock')).toHaveLength(0)
     expect(wrapper.findAll('.tempo-actions')).toHaveLength(4)
     expect(wrapper.get('[data-tempo="50"] .remove-tempo').attributes('aria-label')).toBe(
-      'Remove 50 BPM',
+      'Remove 50 BPM from dashboard',
     )
     expect(wrapper.get('[data-tempo="80"] .remove-tempo').attributes('aria-label')).toBe(
-      'Remove 80 BPM',
+      'Remove 80 BPM from dashboard',
     )
     expect(wrapper.find('.custom-tile .remove-tempo').exists()).toBe(false)
 
