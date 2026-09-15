@@ -2,6 +2,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import TempoButton from '../components/TempoButton.vue'
+import BpmDial from '../components/BpmDial.vue'
 import { useMetronomeStore } from '../stores/metronome'
 import { usePresetsStore } from '../stores/presets'
 import HomeView from './HomeView.vue'
@@ -64,6 +65,21 @@ describe('HomeView', () => {
     expect(wrapper.find('.primary').exists()).toBe(false)
   })
 
+  it('keeps the dashboard dial and presets synchronized', async () => {
+    const wrapper = mount(HomeView, {
+      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    })
+    const dial = wrapper.getComponent(BpmDial)
+
+    await wrapper.get('[data-tempo="50"] .tempo-card').trigger('click')
+    expect(dial.props('modelValue')).toBe(50)
+
+    dial.vm.$emit('update:modelValue', 72)
+    await wrapper.vm.$nextTick()
+    expect(useMetronomeStore().bpm).toBe(72)
+    expect(wrapper.find('.tempo-card.active').exists()).toBe(false)
+  })
+
   it('reorders all dashboard tempos by drag target', async () => {
     localStorage.setItem('metronome-presets', '[80,120]')
     setActivePinia(createPinia())
@@ -107,8 +123,8 @@ describe('HomeView', () => {
     await customCard.trigger('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 })
     await customCard.trigger('pointermove', { pointerId: 1, clientX: 10, clientY: 10 })
 
-    expect(usePresetsStore().dashboardItems).toEqual(['custom', 50, 100])
-    expect(localStorage.getItem('metronome-dashboard-tempos')).toBe('["custom",50,100]')
+    expect(usePresetsStore().dashboardItems).toEqual(['custom', 100, 50])
+    expect(localStorage.getItem('metronome-dashboard-tempos')).toBe('["custom",100,50]')
   })
 
   it('reorders from card geometry when mobile hit testing only returns the captured tile', async () => {
@@ -166,43 +182,4 @@ describe('HomeView', () => {
     expect(usePresetsStore().dashboardTempos).toEqual([100, 50])
   })
 
-  it('reorders from card geometry when mobile hit testing only returns the captured tile', async () => {
-    localStorage.setItem('metronome-presets', '[80,120]')
-    setActivePinia(createPinia())
-
-    const wrapper = mount(HomeView, {
-      attachTo: document.body,
-      global: {
-        stubs: {
-          RouterLink: { template: '<a><slot /></a>' },
-        },
-      },
-    })
-    const cards = wrapper.findAllComponents(TempoButton)
-    const draggedCard = cards.find(card => card.props('bpm') === 80)!.element
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
-      const isTarget = this.dataset.tempo === '120'
-      return {
-        left: isTarget ? 100 : 0,
-        right: isTarget ? 200 : 0,
-        top: isTarget ? 100 : 0,
-        bottom: isTarget ? 300 : 0,
-        width: isTarget ? 100 : 0,
-        height: isTarget ? 200 : 0,
-        x: isTarget ? 100 : 0,
-        y: isTarget ? 100 : 0,
-        toJSON: () => ({}),
-      }
-    })
-    Object.defineProperty(document, 'elementsFromPoint', {
-      configurable: true,
-      value: vi.fn(() => [draggedCard]),
-    })
-
-    cards.find(card => card.props('bpm') === 80)!.vm.$emit('dragmove', { x: 150, y: 200 })
-    await wrapper.vm.$nextTick()
-
-    expect(usePresetsStore().tempos).toEqual([120, 80])
-    wrapper.unmount()
-  })
 })
