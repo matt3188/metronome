@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { onBeforeUnmount, ref } from 'vue'
+import BpmDial from '../components/BpmDial.vue'
 import TempoButton from '../components/TempoButton.vue'
 import { useDashboardDrag } from '../composables/useDashboardDrag'
 import { BUILT_IN_TEMPOS } from '../constants/tempos'
@@ -9,7 +10,7 @@ import { CUSTOM_TILE, usePresetsStore, type DashboardItem } from '../stores/pres
 
 const metronome = useMetronomeStore()
 const presets = usePresetsStore()
-const { bpm, pitch } = storeToRefs(metronome)
+const { bpm, pitch, isPlaying } = storeToRefs(metronome)
 const editing = ref(false)
 const draggingItem = ref<DashboardItem>()
 const customDragOffset = ref({ x: 0, y: 0 })
@@ -94,6 +95,14 @@ onBeforeUnmount(() => endCustomDrag())
   <section class="hero">
     <p class="eyebrow">YOUR TEMPO</p><h1>Find your<br><em>rhythm.</em></h1>
     <p class="lede">Choose a tempo to start instantly. The live beat display stays visible while you explore.</p>
+  </section>
+  <section class="dashboard-dial" aria-labelledby="dashboard-dial-title">
+    <div>
+      <p class="eyebrow">FINE TUNE</p>
+      <h2 id="dashboard-dial-title">Set your BPM</h2>
+      <p>Turn the dial or tap a preset below.</p>
+    </div>
+    <BpmDial :model-value="bpm" :active="isPlaying" @update:model-value="metronome.setTempo" />
   </section>
   <div class="tempo-grid-heading">
     <p>{{ editing ? 'Drag any tempo to rearrange' : 'Press and hold any tempo to edit' }}</p>

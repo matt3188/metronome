@@ -19,6 +19,7 @@ let timer: ReturnType<typeof setTimeout> | undefined
 let pointerId: number | undefined
 let holdOrigin: { x: number; y: number } | undefined
 let suppressPress = false
+let suppressClickTimer: ReturnType<typeof setTimeout> | undefined
 const isDragging = computed(() => held.value && !props.preset)
 const dragStyle = computed(() => isDragging.value
   ? { '--drag-x': `${dragOffset.value.x}px`, '--drag-y': `${dragOffset.value.y}px` }
@@ -30,6 +31,7 @@ const removePointerListeners = () => {
 }
 const startHold = (event: PointerEvent) => {
   if (pointerId !== undefined) return
+  if (event.pointerType === 'touch' || event.pointerType === 'pen') event.preventDefault()
   held.value = false
   suppressPress = false
   dragOffset.value = { x: 0, y: 0 }
@@ -48,6 +50,16 @@ const startHold = (event: PointerEvent) => {
     held.value = true
     emit('longpress')
   }, 550)
+}
+const finishPointer = (event: PointerEvent) => {
+  const wasHeld = held.value
+  cancelHold(event)
+  if (!wasHeld && (event.pointerType === 'touch' || event.pointerType === 'pen')) {
+    emit('press')
+    suppressPress = true
+    if (suppressClickTimer) clearTimeout(suppressClickTimer)
+    suppressClickTimer = setTimeout(() => { suppressPress = false }, 500)
+  }
 }
 function cancelHold(event?: PointerEvent) {
   if (event && pointerId !== undefined && event.pointerId !== pointerId) return
@@ -98,6 +110,8 @@ onBeforeUnmount(() => {
       :aria-label="`${bpm} BPM${editing ? (preset ? ', preset tempo' : ', custom tempo') : ''}`"
       @click="press"
       @pointerdown="startHold"
+      @pointermove.stop="drag"
+      @pointerup="finishPointer"
       @contextmenu.prevent
       draggable="false"
     >
