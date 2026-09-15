@@ -2,6 +2,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import TempoButton from '../components/TempoButton.vue'
+import { useMetronomeStore } from '../stores/metronome'
 import { usePresetsStore } from '../stores/presets'
 import HomeView from './HomeView.vue'
 
@@ -49,6 +50,18 @@ describe('HomeView', () => {
     await wrapper.get('[aria-label="Move Custom tile earlier"]').trigger('click')
     expect(usePresetsStore().dashboardItems).toEqual([50, 100, 'custom', 80])
     expect(localStorage.getItem('metronome-dashboard-tempos')).toBe('[50,100,"custom",80]')
+  })
+
+  it('selects a tempo without starting a second, local playback control', async () => {
+    const wrapper = mount(HomeView, {
+      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    })
+
+    await wrapper.get('[data-tempo="50"] .tempo-card').trigger('click')
+
+    expect(useMetronomeStore().bpm).toBe(50)
+    expect(useMetronomeStore().isPlaying).toBe(false)
+    expect(wrapper.find('.primary').exists()).toBe(false)
   })
 
   it('reorders all dashboard tempos by drag target', async () => {

@@ -9,7 +9,7 @@ import { CUSTOM_TILE, usePresetsStore, type DashboardItem } from '../stores/pres
 
 const metronome = useMetronomeStore()
 const presets = usePresetsStore()
-const { bpm, pitch, isPlaying } = storeToRefs(metronome)
+const { bpm, pitch } = storeToRefs(metronome)
 const editing = ref(false)
 const draggingItem = ref<DashboardItem>()
 const customDragOffset = ref({ x: 0, y: 0 })
@@ -104,7 +104,7 @@ onBeforeUnmount(() => endCustomDrag())
       <TempoButton
         v-if="item !== CUSTOM_TILE"
         :bpm="item"
-        :active="isPlaying && bpm === item && pitch === (presets.pitches[item] ?? 'high')"
+        :active="bpm === item && pitch === (presets.pitches[item] ?? 'high')"
         :editing="editing"
         :preset="BUILT_IN_TEMPOS.includes(item as 50 | 100)"
         :dragging="draggingItem === item"
@@ -112,7 +112,7 @@ onBeforeUnmount(() => endCustomDrag())
         :can-move-later="index < presets.dashboardItems.length - 1"
         :label="`${presets.pitches[item] ?? 'high'} pitch`"
         @longpress="setEditing(true)"
-        @press="editing ? undefined : metronome.toggle(item, presets.pitches[item] ?? 'high')"
+        @press="editing ? undefined : metronome.select(item, presets.pitches[item] ?? 'high')"
         @remove="presets.removeFromDashboard(item)"
         @move="presets.moveDashboard(item, $event)"
         @dragmove="dragItem(item, $event)"

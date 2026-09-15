@@ -102,8 +102,8 @@ onBeforeUnmount(() => {
       draggable="false"
     >
       <span class="tempo-value">{{ bpm }}</span><span class="tempo-unit">BPM</span>
-      <span class="play-icon" aria-hidden="true">{{ active ? 'Ⅱ' : '▶' }}</span>
-      <span class="tempo-label">{{ editing ? (preset ? 'Preset tempo' : 'Custom tempo') : (label ?? 'Tap to play') }}</span>
+      <span class="play-icon" aria-hidden="true">{{ active ? '✓' : '→' }}</span>
+      <span class="tempo-label">{{ editing ? (preset ? 'Preset tempo' : 'Custom tempo') : (label ?? 'Tap to select') }}</span>
     </button>
     <button v-if="editing" type="button" class="remove-tempo" :aria-label="`Remove ${bpm} BPM from dashboard`" @click="$emit('remove')">−</button>
     <div v-if="editing" class="tempo-actions" :aria-label="`${bpm} BPM reorder controls`">
