@@ -89,8 +89,7 @@ onBeforeUnmount(() => {
     :class="{ editing, preset, dragging: dragging || isDragging }"
     :style="dragStyle"
     :data-tempo="bpm"
-    :data-dashboard-item="bpm"
-    data-dashboard-tempo
+    :data-dashboard-tempo="bpm"
   >
     <button
       class="tempo-card"
