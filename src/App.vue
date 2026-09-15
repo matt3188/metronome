@@ -59,15 +59,23 @@ const { theme } = storeToRefs(themeStore)
       </div>
     </header>
     <main><RouterView /></main>
-    <aside v-if="isPlaying" class="now-playing" aria-label="Metronome playback controls">
+    <aside class="now-playing" :class="{ active: isPlaying }" aria-label="Metronome playback controls">
       <div>
-        <span class="now-playing-label">Now playing</span>
+        <span class="now-playing-label">{{ isPlaying ? 'Now playing' : 'Ready to play' }}</span>
         <strong>{{ bpm }} <small>BPM · {{ pitch }} pitch</small></strong>
       </div>
       <div class="beat-track" aria-label="Four beat measure">
-        <span v-for="index in 4" :key="index" :class="{ active: beat % 4 === index - 1 }" />
+        <span v-for="index in 4" :key="index" :class="{ active: isPlaying && beat % 4 === index - 1 }" />
       </div>
-      <button type="button" aria-label="Stop metronome" @click="metronome.stop">■</button>
+      <button
+        class="global-playback-button"
+        type="button"
+        :aria-label="isPlaying ? 'Pause metronome' : 'Play metronome'"
+        :aria-pressed="isPlaying"
+        @click="metronome.toggle()"
+      >
+        <span aria-hidden="true">{{ isPlaying ? 'Ⅱ' : '▶' }}</span>
+      </button>
     </aside>
     <footer>Keep time. Find your rhythm.</footer>
   </div>

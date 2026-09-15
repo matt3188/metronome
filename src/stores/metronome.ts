@@ -20,6 +20,10 @@ export const useMetronomeStore = defineStore('metronome', {
       this.pitch = pitch
       if (this.isPlaying) metronomeService.setPitch(pitch)
     },
+    select(bpm: number, pitch: MetronomePitch = this.pitch) {
+      this.setTempo(bpm)
+      this.setPitch(pitch)
+    },
     togglePitch() {
       this.setPitch(this.pitch === 'high' ? 'low' : 'high')
     },

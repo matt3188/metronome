@@ -55,4 +55,18 @@ describe('metronome store', () => {
     expect(metronomeService.setPitch).toHaveBeenCalledWith('low')
     expect(metronomeService.start).toHaveBeenCalledOnce()
   })
+
+  it('selects a tempo and updates the current sound without stopping playback', async () => {
+    const store = useMetronomeStore()
+    await store.toggle(100)
+
+    store.select(80, 'low')
+
+    expect(store.bpm).toBe(80)
+    expect(store.pitch).toBe('low')
+    expect(store.isPlaying).toBe(true)
+    expect(metronomeService.setTempo).toHaveBeenCalledWith(80)
+    expect(metronomeService.setPitch).toHaveBeenCalledWith('low')
+    expect(metronomeService.start).toHaveBeenCalledOnce()
+  })
 })

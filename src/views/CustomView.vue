@@ -29,7 +29,6 @@ watch([bpm, pitch], () => { saved.value = false })
       </div>
     </div>
     <button class="preview" type="button" @click="metronome.previewPitch()"><span aria-hidden="true">♪</span> Preview {{ pitch }} sound</button>
-    <button class="primary" @click="metronome.toggle()"><span>{{ isPlaying ? 'Ⅱ' : '▶' }}</span>{{ isPlaying ? 'Pause' : 'Start metronome' }}</button>
     <button class="save" @click="save">{{ isSaved ? '✓ Saved to home' : '＋ Add to home' }}</button>
   </section>
 </template>
