@@ -35,6 +35,13 @@ Use `PR_REMOTE=upstream` or pass a base branch as an argument (for example,
 
 Open the local URL printed by Vite (normally `http://localhost:5173`) to see the app. Pick a tempo card to begin playback; the header status and persistent now-playing bar show the active BPM and current beat, and provide a stop control from either screen.
 
+Open, non-draft pull requests targeting `main` are automatically updated when
+pull-request activity or a `main` change starts the workflow, and every six
+hours. Each run sweeps the entire open queue, continues past individual API
+failures, and leaves a complete job summary. Contributors must leave **Allow
+edits from maintainers** enabled. The workflow reports branches that GitHub
+cannot update rather than applying an unsafe automatic conflict resolution.
+
 ## Architecture
 
 - `src/services/metronome.ts` owns the single Web Audio scheduler.
