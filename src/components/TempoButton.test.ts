@@ -131,7 +131,7 @@ describe('TempoButton', () => {
     const custom = mount(TempoButton, { props: { bpm: 120, active: false } })
     const builtIn = mount(TempoButton, { props: { bpm: 100, active: false, preset: true } })
 
-    expect(custom.attributes('data-dashboard-tempo')).toBe('')
-    expect(builtIn.attributes('data-dashboard-tempo')).toBe('')
+    expect(custom.attributes('data-dashboard-tempo')).toBe('120')
+    expect(builtIn.attributes('data-dashboard-tempo')).toBe('100')
   })
 })

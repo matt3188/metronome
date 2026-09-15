@@ -85,6 +85,29 @@ describe('HomeView', () => {
     expect(usePresetsStore().dashboardTempos).toEqual([50, 100, 120, 80])
   })
 
+  it('reorders the Custom tile by drag target', async () => {
+    const wrapper = mount(HomeView, {
+      global: {
+        stubs: {
+          RouterLink: { template: '<a><slot /></a>' },
+        },
+      },
+    })
+    await wrapper.get('.tempo-grid-heading button').trigger('click')
+    const targetCard = wrapper.get('[data-tempo="50"]').element
+    Object.defineProperty(document, 'elementsFromPoint', {
+      configurable: true,
+      value: vi.fn(() => [targetCard]),
+    })
+
+    const customCard = wrapper.get('.custom-card')
+    await customCard.trigger('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 })
+    await customCard.trigger('pointermove', { pointerId: 1, clientX: 10, clientY: 10 })
+
+    expect(usePresetsStore().dashboardItems).toEqual(['custom', 50, 100])
+    expect(localStorage.getItem('metronome-dashboard-tempos')).toBe('["custom",50,100]')
+  })
+
   it('reorders from card geometry when mobile hit testing only returns the captured tile', async () => {
     localStorage.setItem('metronome-presets', '[80,120]')
     setActivePinia(createPinia())

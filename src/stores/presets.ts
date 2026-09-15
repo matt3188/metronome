@@ -93,9 +93,9 @@ export const usePresetsStore = defineStore('presets', {
       this.dashboardItems = reordered
       localStorage.setItem(DASHBOARD_KEY, JSON.stringify(this.dashboardItems))
     },
-    moveDashboardTo(bpm: number, targetBpm: number) {
-      const from = this.dashboardItems.indexOf(bpm)
-      const to = this.dashboardItems.indexOf(targetBpm)
+    moveDashboardTo(item: DashboardItem, targetItem: DashboardItem) {
+      const from = this.dashboardItems.indexOf(item)
+      const to = this.dashboardItems.indexOf(targetItem)
       if (from === -1 || to === -1 || from === to) return
       const reordered = [...this.dashboardItems]
       const [tempo] = reordered.splice(from, 1)
