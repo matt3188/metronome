@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { ref } from 'vue'
-import CustomDashboardTile from '../components/CustomDashboardTile.vue'
+import CustomCog from '../components/CustomCog.vue'
 import TempoButton from '../components/TempoButton.vue'
 import { useDashboardDrag } from '../composables/useDashboardDrag'
 import { BUILT_IN_TEMPOS } from '../constants/tempos'
@@ -55,6 +55,16 @@ const setEditing = (value: boolean) => {
         :can-move-later="index < presets.dashboardItems.length - 1"
         @move="presets.moveDashboardItem(CUSTOM_TILE, $event)"
       />
+      <article v-else class="tempo-card-wrap custom-tile" :class="{ editing }">
+        <RouterLink to="/custom" class="custom-card" :aria-disabled="editing" @click="editing && $event.preventDefault()">
+          <CustomCog />
+          <strong>Custom</strong><small>Set your own pace</small>
+        </RouterLink>
+        <div v-if="editing" class="tempo-actions custom-tempo-actions" aria-label="Custom tile controls">
+          <button type="button" :disabled="index === 0" aria-label="Move Custom tile earlier" @click="presets.moveDashboardItem(CUSTOM_TILE, -1)">←</button>
+          <button type="button" :disabled="index === presets.dashboardItems.length - 1" aria-label="Move Custom tile later" @click="presets.moveDashboardItem(CUSTOM_TILE, 1)">→</button>
+        </div>
+      </article>
     </template>
   </section>
   <section v-if="editing && presets.removedBuiltIns.length" class="removed-presets" aria-label="Removed preset tempos">
