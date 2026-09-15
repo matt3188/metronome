@@ -3,6 +3,7 @@ import { storeToRefs } from 'pinia'
 import { ref } from 'vue'
 import CustomCog from '../components/CustomCog.vue'
 import TempoButton from '../components/TempoButton.vue'
+import { useDashboardDrag } from '../composables/useDashboardDrag'
 import { BUILT_IN_TEMPOS } from '../constants/tempos'
 import { useMetronomeStore } from '../stores/metronome'
 import { CUSTOM_TILE, usePresetsStore } from '../stores/presets'
@@ -11,38 +12,12 @@ const metronome = useMetronomeStore()
 const presets = usePresetsStore()
 const { bpm, pitch, isPlaying } = storeToRefs(metronome)
 const editing = ref(false)
-const draggingTempo = ref<number>()
+const { draggingTempo, dragTempo, stopDragging } = useDashboardDrag(
+  (tempo, targetTempo) => presets.moveDashboardTo(tempo, targetTempo),
+)
 const setEditing = (value: boolean) => {
   editing.value = value
-  if (!value) draggingTempo.value = undefined
-}
-const tempoAtPoint = (tempo: number, point: { x: number; y: number }) => {
-  const topElement = document.elementFromPoint?.(point.x, point.y)
-  const elements = document.elementsFromPoint?.(point.x, point.y)
-    ?? (topElement ? [topElement] : [])
-
-  const hitTarget = elements
-    .map(element => element.closest<HTMLElement>('[data-dashboard-tempo]'))
-    .find(element => element && Number(element.dataset.tempo) !== tempo)
-  if (hitTarget) return hitTarget
-
-  // Some mobile browsers return only the pointer-captured (dragged) element from
-  // elementsFromPoint. Checking the other cards' geometry keeps reordering
-  // working while the dragged tile is rendered above them.
-  return [...document.querySelectorAll<HTMLElement>('[data-dashboard-tempo]')]
-    .filter(element => Number(element.dataset.tempo) !== tempo)
-    .find(element => {
-      const bounds = element.getBoundingClientRect()
-      return point.x >= bounds.left && point.x <= bounds.right
-        && point.y >= bounds.top && point.y <= bounds.bottom
-    })
-}
-const dragTempo = (tempo: number, point: { x: number; y: number }) => {
-  draggingTempo.value = tempo
-  const target = tempoAtPoint(tempo, point)
-  if (!target) return
-  const targetTempo = Number(target.dataset.tempo)
-  presets.moveDashboardTo(tempo, targetTempo)
+  if (!value) stopDragging()
 }
 </script>
 <template>
@@ -71,7 +46,14 @@ const dragTempo = (tempo: number, point: { x: number; y: number }) => {
         @remove="presets.removeFromDashboard(item)"
         @move="presets.moveDashboard(item, $event)"
         @dragmove="dragTempo(item, $event)"
-        @dragend="draggingTempo = undefined"
+        @dragend="stopDragging"
+      />
+      <CustomDashboardTile
+        v-else
+        :editing="editing"
+        :can-move-earlier="index > 0"
+        :can-move-later="index < presets.dashboardItems.length - 1"
+        @move="presets.moveDashboardItem(CUSTOM_TILE, $event)"
       />
       <article v-else class="tempo-card-wrap custom-tile" :class="{ editing }">
         <RouterLink to="/custom" class="custom-card" :aria-disabled="editing" @click="editing && $event.preventDefault()">
