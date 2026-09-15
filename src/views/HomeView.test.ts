@@ -16,7 +16,17 @@ describe('HomeView', () => {
     Reflect.deleteProperty(document, 'elementsFromPoint')
   })
 
-  it('keeps built-in tempos ahead of saved custom tempos and locks only the built-ins', async () => {
+  it('shows a large decorative cog on the custom tempo tile', () => {
+    const wrapper = mount(HomeView, {
+      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    })
+
+    const cog = wrapper.get('.custom-tile .custom-cog')
+    expect(cog.attributes('viewBox')).toBe('0 0 24 24')
+    expect(cog.attributes('aria-hidden')).toBe('true')
+  })
+
+  it('makes built-in and custom tempos manageable', async () => {
     localStorage.setItem('metronome-presets', '[80]')
     setActivePinia(createPinia())
 
@@ -36,14 +46,22 @@ describe('HomeView', () => {
 
     await wrapper.get('.tempo-grid-heading button').trigger('click')
 
-    expect(wrapper.findAll('.preset-lock')).toHaveLength(2)
-    expect(wrapper.findAll('.tempo-actions')).toHaveLength(1)
+    expect(wrapper.findAll('.preset-lock')).toHaveLength(0)
+    expect(wrapper.findAll('.tempo-actions')).toHaveLength(4)
+    expect(wrapper.get('[data-tempo="50"] .remove-tempo').attributes('aria-label')).toBe(
+      'Remove 50 BPM',
+    )
     expect(wrapper.get('[data-tempo="80"] .remove-tempo').attributes('aria-label')).toBe(
       'Remove 80 BPM',
     )
+    expect(wrapper.find('.custom-tile .remove-tempo').exists()).toBe(false)
+
+    await wrapper.get('[aria-label="Move Custom tile earlier"]').trigger('click')
+    expect(usePresetsStore().dashboardItems).toEqual([50, 100, 'custom', 80])
+    expect(localStorage.getItem('metronome-dashboard-tempos')).toBe('[50,100,"custom",80]')
   })
 
-  it('reorders custom tempos without treating overlapping built-ins as drag targets', async () => {
+  it('reorders all dashboard tempos by drag target', async () => {
     localStorage.setItem('metronome-presets', '[80,120]')
     setActivePinia(createPinia())
 
@@ -55,17 +73,71 @@ describe('HomeView', () => {
       },
     })
     const cards = wrapper.findAllComponents(TempoButton)
-    const builtInCard = cards[0].element
     const targetCard = cards.find(card => card.props('bpm') === 120)!.element
     Object.defineProperty(document, 'elementsFromPoint', {
       configurable: true,
-      value: vi.fn(() => [builtInCard, targetCard]),
+      value: vi.fn(() => [targetCard]),
     })
 
     cards.find(card => card.props('bpm') === 80)!.vm.$emit('dragmove', { x: 10, y: 10 })
     await wrapper.vm.$nextTick()
 
-    expect(usePresetsStore().tempos).toEqual([120, 80])
+    expect(usePresetsStore().dashboardTempos).toEqual([50, 100, 120, 80])
+  })
+
+  it('reorders from card geometry when mobile hit testing only returns the captured tile', async () => {
+    localStorage.setItem('metronome-presets', '[80,120]')
+    setActivePinia(createPinia())
+
+    const wrapper = mount(HomeView, {
+      attachTo: document.body,
+      global: {
+        stubs: {
+          RouterLink: { template: '<a><slot /></a>' },
+        },
+      },
+    })
+    const cards = wrapper.findAllComponents(TempoButton)
+    const draggedCard = cards.find(card => card.props('bpm') === 80)!.element
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
+      const isTarget = this.dataset.tempo === '120'
+      return {
+        left: isTarget ? 100 : 0,
+        right: isTarget ? 200 : 0,
+        top: isTarget ? 100 : 0,
+        bottom: isTarget ? 300 : 0,
+        width: isTarget ? 100 : 0,
+        height: isTarget ? 200 : 0,
+        x: isTarget ? 100 : 0,
+        y: isTarget ? 100 : 0,
+        toJSON: () => ({}),
+      }
+    })
+    Object.defineProperty(document, 'elementsFromPoint', {
+      configurable: true,
+      value: vi.fn(() => [draggedCard]),
+    })
+
+    cards.find(card => card.props('bpm') === 80)!.vm.$emit('dragmove', { x: 150, y: 200 })
+    await wrapper.vm.$nextTick()
+
+    expect(usePresetsStore().dashboardTempos).toEqual([50, 100, 120, 80])
+    wrapper.unmount()
+  })
+
+  it('lets a removed built-in preset be restored in management mode', async () => {
+    const wrapper = mount(HomeView, {
+      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    })
+
+    await wrapper.get('.tempo-grid-heading button').trigger('click')
+    await wrapper.get('[data-tempo="50"] .remove-tempo').trigger('click')
+
+    expect(usePresetsStore().dashboardTempos).toEqual([100])
+    expect(wrapper.get('.removed-presets button').text()).toContain('50 BPM')
+
+    await wrapper.get('.removed-presets button').trigger('click')
+    expect(usePresetsStore().dashboardTempos).toEqual([100, 50])
   })
 
   it('reorders from card geometry when mobile hit testing only returns the captured tile', async () => {

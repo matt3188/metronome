@@ -1,16 +1,20 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { ref } from 'vue'
+import CustomDashboardTile from '../components/CustomDashboardTile.vue'
 import TempoButton from '../components/TempoButton.vue'
+import { useDashboardDrag } from '../composables/useDashboardDrag'
 import { BUILT_IN_TEMPOS } from '../constants/tempos'
 import { useMetronomeStore } from '../stores/metronome'
-import { usePresetsStore } from '../stores/presets'
+import { CUSTOM_TILE, usePresetsStore } from '../stores/presets'
 
 const metronome = useMetronomeStore()
 const presets = usePresetsStore()
 const { bpm, pitch, isPlaying } = storeToRefs(metronome)
 const editing = ref(false)
-const draggingTempo = ref<number>()
+const { draggingTempo, dragTempo, stopDragging } = useDashboardDrag(
+  (tempo, targetTempo) => presets.moveDashboardTo(tempo, targetTempo),
+)
 const setEditing = (value: boolean) => {
   editing.value = value
   if (!value) draggingTempo.value = undefined
@@ -50,28 +54,39 @@ const dragTempo = (tempo: number, point: { x: number; y: number }) => {
     <p class="lede">Choose a tempo to start instantly. The live beat display stays visible while you explore.</p>
   </section>
   <div class="tempo-grid-heading">
-    <p>{{ editing ? 'Drag custom tempos to rearrange' : 'Press and hold any tempo to edit' }}</p>
+    <p>{{ editing ? 'Drag any tempo to rearrange' : 'Press and hold any tempo to edit' }}</p>
     <button type="button" :aria-pressed="editing" @click="setEditing(!editing)">{{ editing ? 'Done' : 'Manage' }}</button>
   </div>
   <section class="tempo-grid" :class="{ editing }" aria-label="Quick tempos">
-    <TempoButton v-for="tempo in BUILT_IN_TEMPOS" :key="tempo" :bpm="tempo" :active="isPlaying && bpm === tempo" :editing="editing" preset @longpress="setEditing(true)" @press="editing ? undefined : metronome.toggle(tempo)" />
-    <TempoButton
-      v-for="(tempo, index) in presets.tempos"
-      :key="`preset-${tempo}`"
-      :bpm="tempo"
-      :active="isPlaying && bpm === tempo && pitch === (presets.pitches[tempo] ?? 'high')"
-      :editing="editing"
-      :dragging="draggingTempo === tempo"
-      :can-move-earlier="index > 0"
-      :can-move-later="index < presets.tempos.length - 1"
-      :label="`${presets.pitches[tempo] ?? 'high'} pitch`"
-      @longpress="setEditing(true)"
-      @press="editing ? undefined : metronome.toggle(tempo, presets.pitches[tempo] ?? 'high')"
-      @remove="presets.remove(tempo)"
-      @move="presets.move(tempo, $event)"
-      @dragmove="dragTempo(tempo, $event)"
-      @dragend="draggingTempo = undefined"
-    />
-    <RouterLink to="/custom" class="custom-card"><span class="plus">＋</span><strong>Custom</strong><small>Set your own pace</small></RouterLink>
+    <template v-for="(item, index) in presets.dashboardItems" :key="item">
+      <TempoButton
+        v-if="item !== CUSTOM_TILE"
+        :bpm="item"
+        :active="isPlaying && bpm === item && pitch === (presets.pitches[item] ?? 'high')"
+        :editing="editing"
+        :preset="BUILT_IN_TEMPOS.includes(item as 50 | 100)"
+        :dragging="draggingTempo === item"
+        :can-move-earlier="index > 0"
+        :can-move-later="index < presets.dashboardItems.length - 1"
+        :label="`${presets.pitches[item] ?? 'high'} pitch`"
+        @longpress="setEditing(true)"
+        @press="editing ? undefined : metronome.toggle(item, presets.pitches[item] ?? 'high')"
+        @remove="presets.removeFromDashboard(item)"
+        @move="presets.moveDashboard(item, $event)"
+        @dragmove="dragTempo(item, $event)"
+        @dragend="stopDragging"
+      />
+      <CustomDashboardTile
+        v-else
+        :editing="editing"
+        :can-move-earlier="index > 0"
+        :can-move-later="index < presets.dashboardItems.length - 1"
+        @move="presets.moveDashboardItem(CUSTOM_TILE, $event)"
+      />
+    </template>
+  </section>
+  <section v-if="editing && presets.removedBuiltIns.length" class="removed-presets" aria-label="Removed preset tempos">
+    <div><strong>Removed presets</strong><small>Restore a preset to your dashboard.</small></div>
+    <button v-for="tempo in presets.removedBuiltIns" :key="tempo" type="button" @click="presets.restoreBuiltIn(tempo)">＋ {{ tempo }} BPM</button>
   </section>
 </template>
