@@ -38,9 +38,12 @@ Open the local URL printed by Vite (normally `http://localhost:5173`) to see the
 Open, non-draft pull requests targeting `main` are automatically updated when
 pull-request activity or a `main` change starts the workflow, and every six
 hours. Each run sweeps the entire open queue, continues past individual API
-failures, and leaves a complete job summary. Contributors must leave **Allow
-edits from maintainers** enabled. The workflow reports branches that GitHub
-cannot update rather than applying an unsafe automatic conflict resolution.
+failures, and leaves a complete job summary. When GitHub cannot update a branch
+because it conflicts with `main`, same-repository branches are merged locally
+with the pull request's conflicting hunks preserved and pushed with a lease.
+The normal pull request checks then validate the result. Fork branches still
+require **Allow edits from maintainers** and are reported for manual resolution
+when GitHub cannot update them safely.
 
 ## Architecture
 
