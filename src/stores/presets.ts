@@ -5,8 +5,7 @@ import type { MetronomePitch } from '../services/metronome'
 const KEY = 'metronome-presets'
 const PITCH_KEY = 'metronome-preset-pitches'
 const DASHBOARD_KEY = 'metronome-dashboard-tempos'
-export const CUSTOM_TILE = 'custom' as const
-export type DashboardItem = number | typeof CUSTOM_TILE
+export type DashboardItem = number
 const load = (): number[] => {
   try {
     const saved: unknown = JSON.parse(localStorage.getItem(KEY) ?? '[]')
@@ -26,15 +25,15 @@ const loadDashboard = (customTempos: number[]): DashboardItem[] => {
   const available = [...BUILT_IN_TEMPOS, ...customTempos]
   try {
     const saved: unknown = JSON.parse(localStorage.getItem(DASHBOARD_KEY) ?? 'null')
-    if (!Array.isArray(saved)) return [...available, CUSTOM_TILE]
+    if (!Array.isArray(saved)) return available
     const ordered = [...new Set(saved.filter((value): value is DashboardItem => (
-      value === CUSTOM_TILE || (Number.isInteger(value) && available.includes(value as number))
+      Number.isInteger(value) && available.includes(value as number)
     )))]
     // A newly-created custom tempo should still appear even when a layout was
     // saved before it existed. Missing built-ins, however, remain intentionally hidden.
     const withNewTempos = [...ordered, ...customTempos.filter(tempo => !ordered.includes(tempo))]
-    return withNewTempos.includes(CUSTOM_TILE) ? withNewTempos : [...withNewTempos, CUSTOM_TILE]
-  } catch { return [...available, CUSTOM_TILE] }
+    return withNewTempos
+  } catch { return available }
 }
 
 export const usePresetsStore = defineStore('presets', {
@@ -51,8 +50,7 @@ export const usePresetsStore = defineStore('presets', {
     add(bpm: number, pitch: MetronomePitch = 'high') {
       if (!isBuiltInTempo(bpm) && !this.tempos.includes(bpm)) {
         this.tempos.push(bpm)
-        const customIndex = this.dashboardItems.indexOf(CUSTOM_TILE)
-        this.dashboardItems.splice(customIndex < 0 ? this.dashboardItems.length : customIndex, 0, bpm)
+        this.dashboardItems.push(bpm)
         localStorage.setItem(KEY, JSON.stringify(this.tempos))
         localStorage.setItem(DASHBOARD_KEY, JSON.stringify(this.dashboardItems))
       }
@@ -76,8 +74,7 @@ export const usePresetsStore = defineStore('presets', {
     restoreTempo(bpm: number) {
       const exists = isBuiltInTempo(bpm) || this.tempos.includes(bpm)
       if (!exists || this.dashboardItems.includes(bpm)) return
-      const customIndex = this.dashboardItems.indexOf(CUSTOM_TILE)
-      this.dashboardItems.splice(customIndex < 0 ? this.dashboardItems.length : customIndex, 0, bpm)
+      this.dashboardItems.push(bpm)
       localStorage.setItem(DASHBOARD_KEY, JSON.stringify(this.dashboardItems))
     },
     restoreBuiltIn(bpm: number) {
