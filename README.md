@@ -42,15 +42,12 @@ safely push to them.
 
 Open the local URL printed by Vite (normally `http://localhost:5173`) to see the app. Pick a tempo card to begin playback; the header status and persistent now-playing bar show the active BPM and current beat, and provide a stop control from either screen.
 
-Open, non-draft pull requests targeting `main` are automatically updated when
-pull-request activity or a `main` change starts the workflow, and every six
-hours. Each run sweeps the entire open queue, continues past individual API
-failures, and leaves a complete job summary. When GitHub cannot update a branch
-because it conflicts with `main`, same-repository branches are merged locally
-with the pull request's conflicting hunks preserved and pushed with a lease.
-The normal pull request checks then validate the result. Fork branches still
-require **Allow edits from maintainers** and are reported for manual resolution
-when GitHub cannot update them safely.
+Open, non-draft pull requests targeting `main` are automatically updated after
+`main` changes and every six hours. Contributors must leave **Allow edits from
+maintainers** enabled. For same-repository branches with conflicts, the workflow
+merges `main` while retaining the pull request's version of overlapping hunks;
+the normal validation workflow then tests the merged result. Conflicts in forks
+are reported because the repository token cannot push to a contributor's fork.
 
 ## Architecture
 
