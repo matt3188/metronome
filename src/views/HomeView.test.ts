@@ -7,6 +7,15 @@ import { useMetronomeStore } from '../stores/metronome'
 import { usePresetsStore } from '../stores/presets'
 import HomeView from './HomeView.vue'
 
+vi.mock('../services/metronome', () => ({
+  metronomeService: {
+    start: vi.fn().mockResolvedValue(undefined),
+    setTempo: vi.fn(),
+    setPitch: vi.fn(),
+    stop: vi.fn(),
+  },
+}))
+
 describe('HomeView', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -18,7 +27,7 @@ describe('HomeView', () => {
     Reflect.deleteProperty(document, 'elementsFromPoint')
   })
 
-  it('makes built-in and custom tempos manageable', async () => {
+  it('makes built-in and saved tempos manageable without a Custom tile', async () => {
     localStorage.setItem('metronome-presets', '[80]')
     setActivePinia(createPinia())
 
@@ -39,21 +48,17 @@ describe('HomeView', () => {
     await wrapper.get('.tempo-grid-heading button').trigger('click')
 
     expect(wrapper.findAll('.preset-lock')).toHaveLength(0)
-    expect(wrapper.findAll('.tempo-actions')).toHaveLength(4)
+    expect(wrapper.findAll('.tempo-actions')).toHaveLength(3)
     expect(wrapper.get('[data-tempo="50"] .remove-tempo').attributes('aria-label')).toBe(
       'Remove 50 BPM from dashboard',
     )
     expect(wrapper.get('[data-tempo="80"] .remove-tempo').attributes('aria-label')).toBe(
       'Remove 80 BPM from dashboard',
     )
-    expect(wrapper.find('.custom-tile .remove-tempo').exists()).toBe(false)
-
-    await wrapper.get('[aria-label="Move Custom tile earlier"]').trigger('click')
-    expect(usePresetsStore().dashboardItems).toEqual([50, 100, 'custom', 80])
-    expect(localStorage.getItem('metronome-dashboard-tempos')).toBe('[50,100,"custom",80]')
+    expect(wrapper.find('.custom-tile').exists()).toBe(false)
   })
 
-  it('selects a tempo without starting a second, local playback control', async () => {
+  it('starts the metronome when a tempo is tapped', async () => {
     const wrapper = mount(HomeView, {
       global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
     })
@@ -61,7 +66,7 @@ describe('HomeView', () => {
     await wrapper.get('[data-tempo="50"] .tempo-card').trigger('click')
 
     expect(useMetronomeStore().bpm).toBe(50)
-    expect(useMetronomeStore().isPlaying).toBe(false)
+    expect(useMetronomeStore().isPlaying).toBe(true)
     expect(wrapper.find('.primary').exists()).toBe(false)
   })
 
@@ -102,29 +107,6 @@ describe('HomeView', () => {
     await wrapper.vm.$nextTick()
 
     expect(usePresetsStore().dashboardTempos).toEqual([50, 100, 120, 80])
-  })
-
-  it('reorders the Custom tile by drag target', async () => {
-    const wrapper = mount(HomeView, {
-      global: {
-        stubs: {
-          RouterLink: { template: '<a><slot /></a>' },
-        },
-      },
-    })
-    await wrapper.get('.tempo-grid-heading button').trigger('click')
-    const targetCard = wrapper.get('[data-tempo="50"]').element
-    Object.defineProperty(document, 'elementsFromPoint', {
-      configurable: true,
-      value: vi.fn(() => [targetCard]),
-    })
-
-    const customCard = wrapper.get('.custom-card')
-    await customCard.trigger('pointerdown', { pointerId: 1, clientX: 0, clientY: 0 })
-    await customCard.trigger('pointermove', { pointerId: 1, clientX: 10, clientY: 10 })
-
-    expect(usePresetsStore().dashboardItems).toEqual(['custom', 100, 50])
-    expect(localStorage.getItem('metronome-dashboard-tempos')).toBe('["custom",100,50]')
   })
 
   it('reorders from card geometry when mobile hit testing only returns the captured tile', async () => {

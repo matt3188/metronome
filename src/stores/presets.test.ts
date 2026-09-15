@@ -47,14 +47,20 @@ describe('presets store', () => {
 
     expect(store.dashboardTempos).toEqual([80, 100])
     expect(store.removedTempos).toEqual([50])
-    expect(localStorage.getItem('metronome-dashboard-tempos')).toBe('[80,100,"custom"]')
+    expect(localStorage.getItem('metronome-dashboard-tempos')).toBe('[80,100]')
 
     store.restoreBuiltIn(50)
     expect(store.dashboardTempos).toEqual([80, 100, 50])
 
-    store.moveDashboardTo('custom', 80)
-    expect(store.dashboardItems).toEqual(['custom', 100, 50, 80])
-    expect(localStorage.getItem('metronome-dashboard-tempos')).toBe('["custom",100,50,80]')
+    store.moveDashboardTo(50, 80)
+    expect(store.dashboardItems).toEqual([50, 100, 80])
+    expect(localStorage.getItem('metronome-dashboard-tempos')).toBe('[50,100,80]')
+  })
+  it('drops the retired Custom tile from a saved dashboard layout', () => {
+    localStorage.setItem('metronome-dashboard-tempos', '[50,"custom",100]')
+    setActivePinia(createPinia())
+
+    expect(usePresetsStore().dashboardItems).toEqual([50, 100])
   })
   it('moves a hidden custom tempo to the tray without deleting its saved settings', () => {
     const store = usePresetsStore()
