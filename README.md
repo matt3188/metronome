@@ -20,6 +20,19 @@ can permanently fix the environment instead by replacing
 Run the test suite with `./scripts/npm test` and create a production build with
 `./scripts/npm run build`.
 
+## Preparing a pull request
+
+After committing your work, run `npm run prepare:pr`. The command fetches
+`origin/main`, merges it into the current branch, and runs all validation checks
+before a pull request is created. Ordinary conflicts are resolved automatically
+in favor of the pull request branch, while non-conflicting changes from `main`
+are retained. This keeps each pull request current without a separate conflict
+cleanup round.
+
+Use `PR_REMOTE=upstream` or pass a base branch as an argument (for example,
+`npm run prepare:pr -- release`) when the repository does not use
+`origin/main`.
+
 Open the local URL printed by Vite (normally `http://localhost:5173`) to see the app. Pick a tempo card to begin playback; the header status and persistent now-playing bar show the active BPM and current beat, and provide a stop control from either screen.
 
 Open, non-draft pull requests targeting `main` are automatically updated after
