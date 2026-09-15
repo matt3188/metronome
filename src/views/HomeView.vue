@@ -16,36 +16,35 @@ const editing = ref(false)
 const draggingItem = ref<DashboardItem>()
 const setEditing = (value: boolean) => {
   editing.value = value
-  if (!value) draggingItem.value = undefined
+  if (!value) draggingTempo.value = undefined
 }
-const itemAtPoint = (item: DashboardItem, point: { x: number; y: number }) => {
+const tempoAtPoint = (tempo: number, point: { x: number; y: number }) => {
   const topElement = document.elementFromPoint?.(point.x, point.y)
   const elements = document.elementsFromPoint?.(point.x, point.y)
     ?? (topElement ? [topElement] : [])
 
   const hitTarget = elements
-    .map(element => element.closest<HTMLElement>('[data-dashboard-item]'))
-    .find(element => element && element.dataset.dashboardItem !== String(item))
+    .map(element => element.closest<HTMLElement>('[data-custom-tempo]'))
+    .find(element => element && Number(element.dataset.tempo) !== tempo)
   if (hitTarget) return hitTarget
 
   // Some mobile browsers return only the pointer-captured (dragged) element from
   // elementsFromPoint. Checking the other cards' geometry keeps reordering
   // working while the dragged tile is rendered above them.
-  return [...document.querySelectorAll<HTMLElement>('[data-dashboard-item]')]
-    .filter(element => element.dataset.dashboardItem !== String(item))
+  return [...document.querySelectorAll<HTMLElement>('[data-custom-tempo]')]
+    .filter(element => Number(element.dataset.tempo) !== tempo)
     .find(element => {
       const bounds = element.getBoundingClientRect()
       return point.x >= bounds.left && point.x <= bounds.right
         && point.y >= bounds.top && point.y <= bounds.bottom
     })
 }
-const dragItem = (item: DashboardItem, point: { x: number; y: number }) => {
-  draggingItem.value = item
-  const target = itemAtPoint(item, point)
+const dragTempo = (tempo: number, point: { x: number; y: number }) => {
+  draggingTempo.value = tempo
+  const target = tempoAtPoint(tempo, point)
   if (!target) return
-  const value = target.dataset.dashboardItem
-  const targetItem = value === CUSTOM_TILE ? CUSTOM_TILE : Number(value)
-  presets.moveDashboardTo(item, targetItem)
+  const targetTempo = Number(target.dataset.tempo)
+  presets.moveTo(tempo, targetTempo)
 }
 </script>
 <template>
