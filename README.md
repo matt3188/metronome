@@ -33,6 +33,13 @@ Use `PR_REMOTE=upstream` or pass a base branch as an argument (for example,
 `npm run prepare:pr -- release`) when the repository does not use
 `origin/main`.
 
+The repository also updates every open, same-repository pull request whenever
+`main` changes, when a pull request is opened, every six hours, and on manual
+dispatch. It uses the same predictable rule: the pull request wins overlapping
+conflicts, while non-conflicting changes from `main` are merged normally. Fork
+branches are reported but not modified because the repository token cannot
+safely push to them.
+
 Open the local URL printed by Vite (normally `http://localhost:5173`) to see the app. Pick a tempo card to begin playback; the header status and persistent now-playing bar show the active BPM and current beat, and provide a stop control from either screen.
 
 Open, non-draft pull requests targeting `main` are automatically updated when
