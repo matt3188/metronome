@@ -41,14 +41,15 @@ describe('HomeView', () => {
 
     expect(wrapper.findAll('[data-tempo]').map(card => card.attributes('data-tempo'))).toEqual([
       '50',
-      '100',
+      '200',
+      '120',
       '80',
     ])
 
     await wrapper.get('.tempo-grid-heading button').trigger('click')
 
     expect(wrapper.findAll('.preset-lock')).toHaveLength(0)
-    expect(wrapper.findAll('.tempo-actions')).toHaveLength(3)
+    expect(wrapper.findAll('.tempo-actions')).toHaveLength(4)
     expect(wrapper.get('[data-tempo="50"] .remove-tempo').attributes('aria-label')).toBe(
       'Remove 50 BPM from dashboard',
     )
@@ -85,6 +86,23 @@ describe('HomeView', () => {
     expect(wrapper.find('.tempo-card.active').exists()).toBe(false)
   })
 
+  it('adds a tempo selected with the dial to the presets', async () => {
+    const wrapper = mount(HomeView, {
+      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    })
+    const dial = wrapper.getComponent(BpmDial)
+
+    dial.vm.$emit('update:modelValue', 72)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.get('.add-preset').text()).toContain('Add 72 BPM')
+    await wrapper.get('.add-preset').trigger('click')
+
+    expect(usePresetsStore().dashboardTempos).toEqual([50, 200, 120, 72])
+    expect(wrapper.get('[data-tempo="72"]').exists()).toBe(true)
+    expect(wrapper.get('.add-preset').attributes('disabled')).toBeDefined()
+  })
+
   it('reorders all dashboard tempos by drag target', async () => {
     localStorage.setItem('metronome-presets', '[80,120]')
     setActivePinia(createPinia())
@@ -106,7 +124,7 @@ describe('HomeView', () => {
     cards.find(card => card.props('bpm') === 80)!.vm.$emit('dragmove', { x: 10, y: 10 })
     await wrapper.vm.$nextTick()
 
-    expect(usePresetsStore().dashboardTempos).toEqual([50, 100, 120, 80])
+    expect(usePresetsStore().dashboardTempos).toEqual([50, 200, 80, 120])
   })
 
   it('reorders from card geometry when mobile hit testing only returns the captured tile', async () => {
@@ -145,7 +163,7 @@ describe('HomeView', () => {
     cards.find(card => card.props('bpm') === 80)!.vm.$emit('dragmove', { x: 150, y: 200 })
     await wrapper.vm.$nextTick()
 
-    expect(usePresetsStore().dashboardTempos).toEqual([50, 100, 120, 80])
+    expect(usePresetsStore().dashboardTempos).toEqual([50, 200, 80, 120])
     wrapper.unmount()
   })
 
@@ -157,11 +175,11 @@ describe('HomeView', () => {
     await wrapper.get('.tempo-grid-heading button').trigger('click')
     await wrapper.get('[data-tempo="50"] .remove-tempo').trigger('click')
 
-    expect(usePresetsStore().dashboardTempos).toEqual([100])
+    expect(usePresetsStore().dashboardTempos).toEqual([200, 120])
     expect(wrapper.get('.removed-presets button').text()).toContain('50 BPM')
 
     await wrapper.get('.removed-presets button').trigger('click')
-    expect(usePresetsStore().dashboardTempos).toEqual([100, 50])
+    expect(usePresetsStore().dashboardTempos).toEqual([200, 120, 50])
   })
 
 })
