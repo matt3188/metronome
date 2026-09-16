@@ -76,4 +76,24 @@ describe('presets store', () => {
     expect(store.dashboardTempos).toContain(135)
     expect(store.removedTempos).not.toContain(135)
   })
+
+  it('reorders all visible tempos and lets removed presets be restored', () => {
+    const store = usePresetsStore()
+    store.add(120)
+
+    store.moveTo(120, 0)
+    expect(store.visibleTempos).toEqual([120, 50, 100])
+
+    store.remove(50)
+    expect(store.visibleTempos).toEqual([120, 100])
+    expect(store.availablePresets).toEqual([50])
+
+    store.restorePreset(50)
+    expect(store.visibleTempos).toEqual([120, 100, 50])
+    expect(store.availablePresets).toEqual([])
+    expect(JSON.parse(localStorage.getItem('metronome-tempo-layout') ?? '{}')).toEqual({
+      order: [120, 100, 50],
+      hiddenPresets: [],
+    })
+  })
 })

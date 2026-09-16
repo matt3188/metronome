@@ -28,13 +28,13 @@ describe('TempoButton', () => {
     expect(wrapper.emitted('press')).toBeUndefined()
   })
 
-  it('shows remove and reorder controls for every tempo', () => {
+  it('shows remove and reorder controls for custom and preset tempos', () => {
     const custom = mount(TempoButton, { props: { bpm: 120, active: false, editing: true } })
     const preset = mount(TempoButton, { props: { bpm: 100, active: false, editing: true, preset: true } })
 
-    expect(custom.find('[aria-label="Remove 120 BPM from dashboard"]').exists()).toBe(true)
-    expect(preset.find('[aria-label="Remove 100 BPM from dashboard"]').exists()).toBe(true)
-    expect(preset.find('.preset-lock').exists()).toBe(false)
+    expect(custom.find('[aria-label="Remove 120 BPM"]').exists()).toBe(true)
+    expect(preset.find('[aria-label="Remove 100 BPM"]').exists()).toBe(true)
+    expect(preset.attributes('draggable')).toBe('true')
   })
 
   it('reports pointer movement after a long press for drag reordering', async () => {
