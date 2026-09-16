@@ -19,13 +19,13 @@ describe('TempoButton', () => {
     expect(wrapper.emitted('press')).toBeUndefined()
   })
 
-  it('shows remove and reorder controls only for editable custom tempos', () => {
+  it('shows remove and reorder controls for custom and preset tempos', () => {
     const custom = mount(TempoButton, { props: { bpm: 120, active: false, editing: true } })
     const preset = mount(TempoButton, { props: { bpm: 100, active: false, editing: true, preset: true } })
 
     expect(custom.find('[aria-label="Remove 120 BPM"]').exists()).toBe(true)
-    expect(preset.find('[aria-label="Remove 100 BPM"]').exists()).toBe(false)
-    expect(preset.find('.preset-lock').exists()).toBe(true)
+    expect(preset.find('[aria-label="Remove 100 BPM"]').exists()).toBe(true)
+    expect(preset.attributes('draggable')).toBe('true')
   })
 
   it('shakes a movable custom tempo only until it has moved', async () => {
