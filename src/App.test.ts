@@ -40,7 +40,7 @@ describe('App pitch toggle', () => {
     expect(toggle.attributes('aria-label')).toBe('Switch to high pitch')
   })
 
-  it('keeps one global play and pause control visible', async () => {
+  it('leaves playback controls to the routed page', () => {
     const wrapper = mount(App, {
       global: {
         stubs: {
@@ -49,24 +49,8 @@ describe('App pitch toggle', () => {
         },
       },
     })
-    const control = wrapper.get('.playback-toggle')
-
-    expect(control.attributes('aria-label')).toBe('Play metronome')
-    expect(control.attributes('role')).toBe('switch')
-    expect(control.attributes('aria-checked')).toBe('false')
+    expect(wrapper.find('.playback-toggle').exists()).toBe(false)
     expect(wrapper.find('.now-playing .playback-toggle').exists()).toBe(false)
     expect(wrapper.get('.now-playing-label').text()).toBe('Ready to play')
-
-    await control.trigger('click')
-
-    expect(useMetronomeStore().isPlaying).toBe(true)
-    expect(control.attributes('aria-label')).toBe('Pause metronome')
-    expect(control.attributes('aria-checked')).toBe('true')
-    expect(wrapper.get('.now-playing-label').text()).toBe('Now playing')
-
-    await control.trigger('click')
-
-    expect(useMetronomeStore().isPlaying).toBe(false)
-    expect(control.attributes('aria-label')).toBe('Play metronome')
   })
 })

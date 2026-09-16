@@ -70,6 +70,21 @@ const dragItem = (item: DashboardItem, point: { x: number; y: number }) => {
     </div>
     <BpmDial :model-value="bpm" :active="isPlaying" @update:model-value="metronome.setTempo" />
   </section>
+  <div class="dashboard-playback">
+    <button
+      class="playback-toggle"
+      type="button"
+      role="switch"
+      :aria-checked="isPlaying"
+      :aria-label="isPlaying ? 'Pause metronome' : 'Play metronome'"
+      :title="isPlaying ? 'Pause metronome' : 'Play metronome'"
+      @click="metronome.toggle()"
+    >
+      <span class="playback-option playback-option-play" aria-hidden="true">Play</span>
+      <span class="playback-option playback-option-pause" aria-hidden="true">Pause</span>
+      <span class="playback-toggle-thumb" aria-hidden="true">{{ isPlaying ? 'Ⅱ' : '▶' }}</span>
+    </button>
+  </div>
   <div class="tempo-grid-heading">
     <p>{{ editing ? 'Drag any tempo to rearrange' : 'Press and hold any tempo to edit' }}</p>
     <button type="button" :aria-pressed="editing" @click="setEditing(!editing)">{{ editing ? 'Done' : 'Manage' }}</button>
