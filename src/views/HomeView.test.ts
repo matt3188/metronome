@@ -71,23 +71,20 @@ describe('HomeView', () => {
     expect(wrapper.find('.primary').exists()).toBe(false)
   })
 
-  it('places the play and pause control between the dial and tempo tiles', async () => {
+  it('places the icon play and pause control in the center of the dial', async () => {
     const wrapper = mount(HomeView, {
       global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
     })
-    const control = wrapper.get('.playback-toggle')
-    const children = wrapper.element.children
+    const control = wrapper.get('.dial .dial-playback')
 
-    expect(children.item(2)?.classList.contains('dashboard-playback')).toBe(true)
-    expect(children.item(3)?.classList.contains('tempo-grid-heading')).toBe(true)
+    expect(wrapper.find('.dashboard-playback').exists()).toBe(false)
+    expect(control.find('svg').exists()).toBe(true)
     expect(control.attributes('aria-label')).toBe('Play metronome')
-    expect(control.attributes('aria-checked')).toBe('false')
 
     await control.trigger('click')
 
     expect(useMetronomeStore().isPlaying).toBe(true)
     expect(control.attributes('aria-label')).toBe('Pause metronome')
-    expect(control.attributes('aria-checked')).toBe('true')
   })
 
   it('keeps the dashboard dial and presets synchronized', async () => {

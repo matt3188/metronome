@@ -49,4 +49,14 @@ describe('BpmDial', () => {
 
     expect(wrapper.emitted('update:modelValue')).toEqual([[136]])
   })
+
+  it('emits playback toggles without changing the tempo', async () => {
+    const wrapper = mountDial()
+
+    await wrapper.get('.dial-playback').trigger('pointerdown', { pointerId: 1 })
+    await wrapper.get('.dial-playback').trigger('click')
+
+    expect(wrapper.emitted('toggle')).toEqual([[]])
+    expect(wrapper.emitted('update:modelValue')).toBeUndefined()
+  })
 })
