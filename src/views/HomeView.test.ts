@@ -71,6 +71,25 @@ describe('HomeView', () => {
     expect(wrapper.find('.primary').exists()).toBe(false)
   })
 
+  it('places the play and pause control between the dial and tempo tiles', async () => {
+    const wrapper = mount(HomeView, {
+      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    })
+    const control = wrapper.get('.playback-toggle')
+    const children = wrapper.element.children
+
+    expect(children.item(2)?.classList.contains('dashboard-playback')).toBe(true)
+    expect(children.item(3)?.classList.contains('tempo-grid-heading')).toBe(true)
+    expect(control.attributes('aria-label')).toBe('Play metronome')
+    expect(control.attributes('aria-checked')).toBe('false')
+
+    await control.trigger('click')
+
+    expect(useMetronomeStore().isPlaying).toBe(true)
+    expect(control.attributes('aria-label')).toBe('Pause metronome')
+    expect(control.attributes('aria-checked')).toBe('true')
+  })
+
   it('keeps the dashboard dial and presets synchronized', async () => {
     const wrapper = mount(HomeView, {
       global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },

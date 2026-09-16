@@ -15,19 +15,6 @@ const { theme } = storeToRefs(themeStore)
       <RouterLink to="/" class="brand" aria-label="Metronome home"><span class="brand-dot" />METRONOME</RouterLink>
       <div class="header-actions">
         <button
-          class="playback-toggle"
-          type="button"
-          role="switch"
-          :aria-checked="isPlaying"
-          :aria-label="isPlaying ? 'Pause metronome' : 'Play metronome'"
-          :title="isPlaying ? 'Pause metronome' : 'Play metronome'"
-          @click="metronome.toggle()"
-        >
-          <span class="playback-option playback-option-play" aria-hidden="true">Play</span>
-          <span class="playback-option playback-option-pause" aria-hidden="true">Pause</span>
-          <span class="playback-toggle-thumb" aria-hidden="true">{{ isPlaying ? 'Ⅱ' : '▶' }}</span>
-        </button>
-        <button
           class="pitch-toggle"
           type="button"
           role="switch"
