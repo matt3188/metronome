@@ -5,7 +5,10 @@ const MIN_BPM = 30
 const MAX_BPM = 240
 const ARC_DEGREES = 270
 const props = defineProps<{ modelValue: number; active: boolean }>()
-const emit = defineEmits<{ 'update:modelValue': [value: number] }>()
+const emit = defineEmits<{
+  'update:modelValue': [value: number]
+  toggle: []
+}>()
 const angle = computed(() => ((props.modelValue - MIN_BPM) / (MAX_BPM - MIN_BPM)) * ARC_DEGREES - ARC_DEGREES / 2)
 const draggingPointer = ref<number | null>(null)
 
@@ -47,6 +50,25 @@ const endDrag = (event: PointerEvent) => {
     @pointercancel="endDrag"
   >
     <input aria-label="Tempo in beats per minute" type="range" min="30" max="240" :value="modelValue" @input="emit('update:modelValue', Number(($event.target as HTMLInputElement).value))" />
-    <div class="dial-tick" /><div class="dial-center"><strong>{{ modelValue }}</strong><span>BPM</span></div>
+    <div class="dial-tick" />
+    <div class="dial-center">
+      <strong>{{ modelValue }}</strong>
+      <button
+        class="dial-playback"
+        type="button"
+        :aria-label="active ? 'Pause metronome' : 'Play metronome'"
+        :title="active ? 'Pause metronome' : 'Play metronome'"
+        @pointerdown.stop
+        @click.stop="emit('toggle')"
+      >
+        <svg v-if="active" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M8 6v12M16 6v12" />
+        </svg>
+        <svg v-else viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m9 6 9 6-9 6Z" />
+        </svg>
+      </button>
+      <span>BPM</span>
+    </div>
   </div>
 </template>

@@ -20,7 +20,12 @@ watch([bpm, pitch], () => { saved.value = false })
   <section class="custom-page">
     <RouterLink to="/" class="back">← <span>Back</span></RouterLink>
     <p class="eyebrow">CUSTOM TEMPO</p><h1>Make it <em>yours.</em></h1>
-    <BpmDial :model-value="bpm" :active="isPlaying" @update:model-value="metronome.setTempo" />
+    <BpmDial
+      :model-value="bpm"
+      :active="isPlaying"
+      @update:model-value="metronome.setTempo"
+      @toggle="metronome.toggle()"
+    />
     <div class="adjustments"><button @click="adjust(-5)">−5</button><button @click="adjust(-1)">−1</button><button @click="adjust(1)">+1</button><button @click="adjust(5)">+5</button></div>
     <div class="sound-picker">
       <div><strong>Metronome pitch</strong><small>Choose how each beat sounds</small></div>
