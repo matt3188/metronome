@@ -59,4 +59,12 @@ describe('BpmDial', () => {
     expect(wrapper.emitted('toggle')).toEqual([[]])
     expect(wrapper.emitted('update:modelValue')).toBeUndefined()
   })
+
+  it('places the tempo readout below the dial', () => {
+    const wrapper = mountDial()
+
+    expect(wrapper.get('.dial').find('.dial-readout').exists()).toBe(false)
+    expect(wrapper.get('.dial-readout strong').text()).toBe('135')
+    expect(wrapper.get('.dial-readout span').text()).toBe('BPM')
+  })
 })
