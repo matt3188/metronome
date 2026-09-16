@@ -24,6 +24,27 @@ const loadLayout = (): Layout => {
     hiddenPresets: Array.isArray(candidate.hiddenPresets) ? [...new Set(candidate.hiddenPresets.filter(isBuiltInTempo))] : [],
   }
 }
+const loadPitches = (): Record<number, MetronomePitch> => {
+  try {
+    const saved: unknown = JSON.parse(localStorage.getItem(PITCH_KEY) ?? '{}')
+    if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return {}
+    return Object.fromEntries(Object.entries(saved).filter(([, pitch]) => pitch === 'high' || pitch === 'low'))
+  } catch { return {} }
+}
+const loadDashboard = (customTempos: number[]): DashboardItem[] => {
+  const available = [...BUILT_IN_TEMPOS, ...customTempos]
+  try {
+    const saved: unknown = JSON.parse(localStorage.getItem(DASHBOARD_KEY) ?? 'null')
+    if (!Array.isArray(saved)) return available
+    const ordered = [...new Set(saved.filter((value): value is DashboardItem => (
+      Number.isInteger(value) && available.includes(value as number)
+    )))]
+    // A newly-created custom tempo should still appear even when a layout was
+    // saved before it existed. Missing built-ins, however, remain intentionally hidden.
+    const withNewTempos = [...ordered, ...customTempos.filter(tempo => !ordered.includes(tempo))]
+    return withNewTempos
+  } catch { return available }
+}
 
 export const usePresetsStore = defineStore('presets', {
   state: () => {
@@ -76,6 +97,16 @@ export const usePresetsStore = defineStore('presets', {
       this.order = reordered
       this.tempos = reordered.filter(bpm => !isBuiltInTempo(bpm))
       this.persist()
+    },
+    moveTo(bpm: number, targetBpm: number) {
+      const from = this.tempos.indexOf(bpm)
+      const to = this.tempos.indexOf(targetBpm)
+      if (from === -1 || to === -1 || from === to) return
+      const reordered = [...this.tempos]
+      const [tempo] = reordered.splice(from, 1)
+      reordered.splice(to, 0, tempo)
+      this.tempos = reordered
+      localStorage.setItem(KEY, JSON.stringify(this.tempos))
     },
   },
 })

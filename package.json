@@ -4,8 +4,12 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "check:conflicts": "node scripts/check-merge-conflicts.mjs",
+    "prepare:pr": "node scripts/prepare-pr.mjs",
+    "validate": "npm run check:conflicts && npm run lint && npm test && npm run build",
     "dev": "vite",
     "build": "vite build",
+    "pretest": "npm run check:conflicts",
     "test": "vitest run",
     "lint": "vue-tsc --noEmit"
   },

@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { computed } from 'vue'
 import { useMetronomeStore } from './stores/metronome'
 import { useThemeStore } from './stores/theme'
 
 const metronome = useMetronomeStore()
 const themeStore = useThemeStore()
-const { beat, bpm, isPlaying, remainingSeconds, sessionMinutes } = storeToRefs(metronome)
+const { beat, bpm, isPlaying, pitch } = storeToRefs(metronome)
 const { theme } = storeToRefs(themeStore)
-const countdown = computed(() => `${Math.floor(remainingSeconds.value / 60)}:${(remainingSeconds.value % 60).toString().padStart(2, '0')}`)
 </script>
 
 <template>
@@ -16,10 +14,23 @@ const countdown = computed(() => `${Math.floor(remainingSeconds.value / 60)}:${(
     <header>
       <RouterLink to="/" class="brand" aria-label="Metronome home"><span class="brand-dot" />METRONOME</RouterLink>
       <div class="header-actions">
-        <div class="app-status" :class="{ active: isPlaying }" role="status" aria-live="polite">
-          <span class="status-light" />
-          {{ isPlaying ? `Playing · ${bpm} BPM` : 'Ready' }}
-        </div>
+        <button
+          class="pitch-toggle"
+          type="button"
+          role="switch"
+          :aria-checked="pitch === 'low'"
+          :aria-label="`Switch to ${pitch === 'high' ? 'low' : 'high'} pitch`"
+          :title="`Switch to ${pitch === 'high' ? 'low' : 'high'} pitch`"
+          @click="metronome.togglePitch"
+        >
+          <span class="pitch-option pitch-option-high" aria-hidden="true">High</span>
+          <span class="pitch-option pitch-option-low" aria-hidden="true">Low</span>
+          <span class="pitch-toggle-thumb" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M4 14v-4m5 7V7m5 13V4m5 11V9" />
+            </svg>
+          </span>
+        </button>
         <button
           class="theme-toggle"
           type="button"
@@ -44,16 +55,14 @@ const countdown = computed(() => `${Math.floor(remainingSeconds.value / 60)}:${(
       </div>
     </header>
     <main><RouterView /></main>
-    <aside v-if="isPlaying" class="now-playing" aria-label="Metronome playback controls">
+    <aside class="now-playing" :class="{ active: isPlaying }" aria-label="Metronome playback controls">
       <div>
-        <span class="now-playing-label">Now playing</span>
-        <strong>{{ bpm }} <small>BPM</small></strong>
-        <span v-if="sessionMinutes" class="now-playing-time" role="timer">{{ countdown }} left</span>
+        <span class="now-playing-label">{{ isPlaying ? 'Now playing' : 'Ready to play' }}</span>
+        <strong>{{ bpm }} <small>BPM · {{ pitch }} pitch</small></strong>
       </div>
       <div class="beat-track" aria-label="Four beat measure">
-        <span v-for="index in 4" :key="index" :class="{ active: beat % 4 === index - 1 }" />
+        <span v-for="index in 4" :key="index" :class="{ active: isPlaying && beat % 4 === index - 1 }" />
       </div>
-      <button type="button" aria-label="Stop metronome" @click="metronome.stop">■</button>
     </aside>
     <footer>Keep time. Find your rhythm.</footer>
   </div>
