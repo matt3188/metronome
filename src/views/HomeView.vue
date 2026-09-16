@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import BpmDial from '../components/BpmDial.vue'
 import TempoButton from '../components/TempoButton.vue'
 import { useDashboardDrag } from '../composables/useDashboardDrag'
@@ -12,6 +12,11 @@ const metronome = useMetronomeStore()
 const presets = usePresetsStore()
 const { bpm, pitch, isPlaying } = storeToRefs(metronome)
 const editing = ref(false)
+const isCurrentTempoPreset = computed(() => presets.dashboardItems.includes(bpm.value))
+const addCurrentTempo = () => {
+  presets.add(bpm.value, pitch.value)
+  presets.restoreTempo(bpm.value)
+}
 const draggingItem = ref<DashboardItem>()
 const setEditing = (value: boolean) => {
   editing.value = value
@@ -52,10 +57,16 @@ const dragItem = (item: DashboardItem, point: { x: number; y: number }) => {
     <p class="lede">Choose a tempo to start instantly. The live beat display stays visible while you explore.</p>
   </section>
   <section class="dashboard-dial" aria-labelledby="dashboard-dial-title">
-    <div>
+    <div class="dashboard-dial-copy">
       <p class="eyebrow">FINE TUNE</p>
       <h2 id="dashboard-dial-title">Set your BPM</h2>
-      <p>Turn the dial or tap a preset below.</p>
+      <p>Turn the dial, save your tempo, or tap a preset below.</p>
+      <button
+        class="add-preset"
+        type="button"
+        :disabled="isCurrentTempoPreset"
+        @click="addCurrentTempo"
+      >{{ isCurrentTempoPreset ? '✓ In presets' : `＋ Add ${bpm} BPM to presets` }}</button>
     </div>
     <BpmDial :model-value="bpm" :active="isPlaying" @update:model-value="metronome.setTempo" />
   </section>
@@ -69,7 +80,7 @@ const dragItem = (item: DashboardItem, point: { x: number; y: number }) => {
         :bpm="item"
         :active="bpm === item && pitch === (presets.pitches[item] ?? 'high')"
         :editing="editing"
-        :preset="BUILT_IN_TEMPOS.includes(item as 50 | 100)"
+        :preset="BUILT_IN_TEMPOS.some(tempo => tempo === item)"
         :dragging="draggingItem === item"
         :can-move-earlier="index > 0"
         :can-move-later="index < presets.dashboardItems.length - 1"
