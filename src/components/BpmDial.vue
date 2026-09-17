@@ -40,19 +40,18 @@ const endDrag = (event: PointerEvent) => {
 }
 </script>
 <template>
-  <div
-    class="dial"
-    :class="{ active, dragging: draggingPointer !== null }"
-    :style="{ '--angle': `${angle}deg` }"
-    @pointerdown.prevent="startDrag"
-    @pointermove.prevent="drag"
-    @pointerup="endDrag"
-    @pointercancel="endDrag"
-  >
-    <input aria-label="Tempo in beats per minute" type="range" min="30" max="240" :value="modelValue" @input="emit('update:modelValue', Number(($event.target as HTMLInputElement).value))" />
-    <div class="dial-tick" />
-    <div class="dial-center">
-      <strong>{{ modelValue }}</strong>
+  <div class="bpm-dial-control">
+    <div
+      class="dial"
+      :class="{ active, dragging: draggingPointer !== null }"
+      :style="{ '--angle': `${angle}deg` }"
+      @pointerdown.prevent="startDrag"
+      @pointermove.prevent="drag"
+      @pointerup="endDrag"
+      @pointercancel="endDrag"
+    >
+      <input aria-label="Tempo in beats per minute" type="range" min="30" max="240" :value="modelValue" @input="emit('update:modelValue', Number(($event.target as HTMLInputElement).value))" />
+      <div class="dial-tick" />
       <button
         class="dial-playback"
         type="button"
@@ -68,6 +67,9 @@ const endDrag = (event: PointerEvent) => {
           <path d="m9 6 9 6-9 6Z" />
         </svg>
       </button>
+    </div>
+    <div class="dial-readout" aria-live="polite">
+      <strong>{{ modelValue }}</strong>
       <span>BPM</span>
     </div>
   </div>
