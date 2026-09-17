@@ -77,23 +77,30 @@ describe('presets store', () => {
     expect(store.removedTempos).not.toContain(135)
   })
 
-  it('reorders all visible tempos and lets removed presets be restored', () => {
+  it('overwrites a dashboard preset in place and persists its pitch', () => {
     const store = usePresetsStore()
-    store.add(120)
 
-    store.moveTo(120, 0)
-    expect(store.visibleTempos).toEqual([120, 50, 100])
+    store.overwrite(50, 72, 'low')
 
-    store.remove(50)
-    expect(store.visibleTempos).toEqual([120, 100])
-    expect(store.availablePresets).toEqual([50])
+    expect(store.dashboardTempos).toEqual([72, 200, 120])
+    expect(store.tempos).toEqual([72])
+    expect(store.pitches[72]).toBe('low')
+    expect(localStorage.getItem('metronome-dashboard-tempos')).toBe('[72,200,120]')
+    expect(localStorage.getItem('metronome-presets')).toBe('[72]')
+  })
 
-    store.restorePreset(50)
-    expect(store.visibleTempos).toEqual([120, 100, 50])
-    expect(store.availablePresets).toEqual([])
-    expect(JSON.parse(localStorage.getItem('metronome-tempo-layout') ?? '{}')).toEqual({
-      order: [120, 100, 50],
-      hiddenPresets: [],
-    })
+  it('reorders dashboard tempos and lets removed presets be restored', () => {
+    const store = usePresetsStore()
+    store.add(100)
+
+    store.moveDashboardTo(100, 50)
+    expect(store.dashboardTempos).toEqual([100, 200, 120, 50])
+
+    store.removeFromDashboard(50)
+    expect(store.removedTempos).toEqual([50])
+
+    store.restoreTempo(50)
+    expect(store.dashboardTempos).toEqual([100, 200, 120, 50])
+    expect(store.removedTempos).toEqual([])
   })
 })

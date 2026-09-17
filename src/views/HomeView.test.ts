@@ -119,6 +119,27 @@ describe('HomeView', () => {
     expect(wrapper.get('.add-preset').attributes('disabled')).toBeDefined()
   })
 
+  it('offers to overwrite the selected preset after the dial changes', async () => {
+    const wrapper = mount(HomeView, {
+      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    })
+
+    await wrapper.get('[data-tempo="50"] .tempo-card').trigger('click')
+    expect(wrapper.find('.overwrite-preset').exists()).toBe(false)
+
+    wrapper.getComponent(BpmDial).vm.$emit('update:modelValue', 72)
+    await wrapper.vm.$nextTick()
+
+    const overwrite = wrapper.get('.overwrite-preset')
+    expect(overwrite.text()).toBe('Overwrite 50 BPM preset with 72 BPM')
+    await overwrite.trigger('click')
+
+    expect(usePresetsStore().dashboardTempos).toEqual([72, 200, 120])
+    expect(wrapper.find('[data-tempo="50"]').exists()).toBe(false)
+    expect(wrapper.get('[data-tempo="72"]').exists()).toBe(true)
+    expect(wrapper.find('.overwrite-preset').exists()).toBe(false)
+  })
+
   it('reorders all dashboard tempos by drag target', async () => {
     localStorage.setItem('metronome-presets', '[80,120]')
     setActivePinia(createPinia())
