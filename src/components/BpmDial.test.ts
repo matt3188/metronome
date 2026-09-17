@@ -60,10 +60,11 @@ describe('BpmDial', () => {
     expect(wrapper.emitted('update:modelValue')).toBeUndefined()
   })
 
-  it('places the tempo readout below the dial', () => {
+  it('places the tempo readout above the dial', () => {
     const wrapper = mountDial()
 
     expect(wrapper.get('.dial').find('.dial-readout').exists()).toBe(false)
+    expect(wrapper.get('.bpm-dial-control').element.firstElementChild).toBe(wrapper.get('.dial-readout').element)
     expect(wrapper.get('.dial-readout strong').text()).toBe('135')
     expect(wrapper.get('.dial-readout span').text()).toBe('BPM')
   })

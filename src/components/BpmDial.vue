@@ -41,6 +41,10 @@ const endDrag = (event: PointerEvent) => {
 </script>
 <template>
   <div class="bpm-dial-control">
+    <div class="dial-readout" aria-live="polite">
+      <strong>{{ modelValue }}</strong>
+      <span>BPM</span>
+    </div>
     <div
       class="dial"
       :class="{ active, dragging: draggingPointer !== null }"
@@ -67,10 +71,6 @@ const endDrag = (event: PointerEvent) => {
           <path d="m9 6 9 6-9 6Z" />
         </svg>
       </button>
-    </div>
-    <div class="dial-readout" aria-live="polite">
-      <strong>{{ modelValue }}</strong>
-      <span>BPM</span>
     </div>
   </div>
 </template>
