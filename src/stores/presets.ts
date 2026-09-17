@@ -1,28 +1,18 @@
 import { defineStore } from 'pinia'
 import { BUILT_IN_TEMPOS, isBuiltInTempo } from '../constants/tempos'
+import type { MetronomePitch } from '../services/metronome'
 
-const CUSTOM_KEY = 'metronome-presets'
-const LAYOUT_KEY = 'metronome-tempo-layout'
-type Layout = { order: number[]; hiddenPresets: number[] }
-
-const validTempo = (value: unknown): value is number => Number.isInteger(value) && Number(value) >= 30 && Number(value) <= 240
-const readJson = (key: string): unknown => {
-  try { return JSON.parse(localStorage.getItem(key) ?? 'null') } catch { return null }
-}
-const loadCustom = () => {
-  const saved = readJson(CUSTOM_KEY)
-  return Array.isArray(saved)
-    ? [...new Set(saved.filter((value): value is number => validTempo(value) && !isBuiltInTempo(value)))]
-    : []
-}
-const loadLayout = (): Layout => {
-  const saved = readJson(LAYOUT_KEY)
-  if (!saved || typeof saved !== 'object') return { order: [], hiddenPresets: [] }
-  const candidate = saved as Partial<Layout>
-  return {
-    order: Array.isArray(candidate.order) ? [...new Set(candidate.order.filter(validTempo))] : [],
-    hiddenPresets: Array.isArray(candidate.hiddenPresets) ? [...new Set(candidate.hiddenPresets.filter(isBuiltInTempo))] : [],
-  }
+const KEY = 'metronome-presets'
+const PITCH_KEY = 'metronome-preset-pitches'
+const DASHBOARD_KEY = 'metronome-dashboard-tempos'
+export type DashboardItem = number
+const load = (): number[] => {
+  try {
+    const saved: unknown = JSON.parse(localStorage.getItem(KEY) ?? '[]')
+    return Array.isArray(saved)
+      ? [...new Set(saved.filter((value): value is number => Number.isInteger(value) && value >= 30 && value <= 240 && !isBuiltInTempo(value)))]
+      : []
+  } catch { return [] }
 }
 const loadPitches = (): Record<number, MetronomePitch> => {
   try {
@@ -48,55 +38,96 @@ const loadDashboard = (customTempos: number[]): DashboardItem[] => {
 
 export const usePresetsStore = defineStore('presets', {
   state: () => {
-    const tempos = loadCustom()
-    const layout = loadLayout()
-    const visible = [...BUILT_IN_TEMPOS.filter(bpm => !layout.hiddenPresets.includes(bpm)), ...tempos]
-    return {
-      tempos,
-      hiddenPresets: layout.hiddenPresets,
-      order: [...layout.order.filter(bpm => visible.includes(bpm)), ...visible.filter(bpm => !layout.order.includes(bpm))],
-    }
+    const tempos = load()
+    return { tempos, dashboardItems: loadDashboard(tempos), pitches: loadPitches() }
   },
   getters: {
-    visibleTempos: state => state.order,
-    availablePresets: state => BUILT_IN_TEMPOS.filter(bpm => state.hiddenPresets.includes(bpm)),
+    dashboardTempos: state => state.dashboardItems.filter((item): item is number => typeof item === 'number'),
+    removedTempos: state => [...BUILT_IN_TEMPOS, ...state.tempos]
+      .filter(tempo => !state.dashboardItems.includes(tempo)),
   },
   actions: {
-    persist() {
-      localStorage.setItem(CUSTOM_KEY, JSON.stringify(this.tempos))
-      localStorage.setItem(LAYOUT_KEY, JSON.stringify({ order: this.order, hiddenPresets: this.hiddenPresets }))
-    },
-    add(bpm: number) {
+    add(bpm: number, pitch: MetronomePitch = 'high') {
       if (!isBuiltInTempo(bpm) && !this.tempos.includes(bpm)) {
         this.tempos.push(bpm)
-        this.order.push(bpm)
-        this.persist()
+        this.dashboardItems.push(bpm)
+        localStorage.setItem(KEY, JSON.stringify(this.tempos))
+        localStorage.setItem(DASHBOARD_KEY, JSON.stringify(this.dashboardItems))
+      }
+      if (!isBuiltInTempo(bpm)) {
+        this.pitches[bpm] = pitch
+        localStorage.setItem(PITCH_KEY, JSON.stringify(this.pitches))
       }
     },
-    remove(bpm: number) {
-      this.order = this.order.filter(value => value !== bpm)
-      if (isBuiltInTempo(bpm)) this.hiddenPresets.push(bpm)
-      else this.tempos = this.tempos.filter(value => value !== bpm)
-      this.persist()
+    overwrite(previousBpm: number, bpm: number, pitch: MetronomePitch = 'high') {
+      if (!this.dashboardItems.includes(previousBpm) || previousBpm === bpm) return
+
+      const replaced = this.dashboardItems.map(value => value === previousBpm ? bpm : value)
+      this.dashboardItems = replaced.filter((value, position) => replaced.indexOf(value) === position)
+
+      if (!isBuiltInTempo(previousBpm)) {
+        this.tempos = this.tempos.filter(value => value !== previousBpm)
+        delete this.pitches[previousBpm]
+      }
+      if (!isBuiltInTempo(bpm) && !this.tempos.includes(bpm)) this.tempos.push(bpm)
+      if (!isBuiltInTempo(bpm)) this.pitches[bpm] = pitch
+
+      localStorage.setItem(KEY, JSON.stringify(this.tempos))
+      localStorage.setItem(PITCH_KEY, JSON.stringify(this.pitches))
+      localStorage.setItem(DASHBOARD_KEY, JSON.stringify(this.dashboardItems))
     },
-    restorePreset(bpm: number) {
-      if (!isBuiltInTempo(bpm) || !this.hiddenPresets.includes(bpm)) return
-      this.hiddenPresets = this.hiddenPresets.filter(value => value !== bpm)
-      this.order.push(bpm)
-      this.persist()
+    remove(bpm: number) {
+      this.tempos = this.tempos.filter(value => value !== bpm)
+      this.dashboardItems = this.dashboardItems.filter(value => value !== bpm)
+      delete this.pitches[bpm]
+      localStorage.setItem(KEY, JSON.stringify(this.tempos))
+      localStorage.setItem(PITCH_KEY, JSON.stringify(this.pitches))
+      localStorage.setItem(DASHBOARD_KEY, JSON.stringify(this.dashboardItems))
+    },
+    removeFromDashboard(bpm: number) {
+      this.dashboardItems = this.dashboardItems.filter(value => value !== bpm)
+      localStorage.setItem(DASHBOARD_KEY, JSON.stringify(this.dashboardItems))
+    },
+    restoreTempo(bpm: number) {
+      const exists = isBuiltInTempo(bpm) || this.tempos.includes(bpm)
+      if (!exists || this.dashboardItems.includes(bpm)) return
+      this.dashboardItems.push(bpm)
+      localStorage.setItem(DASHBOARD_KEY, JSON.stringify(this.dashboardItems))
+    },
+    restoreBuiltIn(bpm: number) {
+      this.restoreTempo(bpm)
+    },
+    moveDashboard(bpm: number, direction: -1 | 1) {
+      this.moveDashboardItem(bpm, direction)
+    },
+    moveDashboardItem(item: DashboardItem, direction: -1 | 1) {
+      const from = this.dashboardItems.indexOf(item)
+      const to = from + direction
+      if (from === -1 || to < 0 || to >= this.dashboardItems.length) return
+      const reordered = [...this.dashboardItems]
+      const [movedItem] = reordered.splice(from, 1)
+      reordered.splice(to, 0, movedItem)
+      this.dashboardItems = reordered
+      localStorage.setItem(DASHBOARD_KEY, JSON.stringify(this.dashboardItems))
+    },
+    moveDashboardTo(item: DashboardItem, targetItem: DashboardItem) {
+      const from = this.dashboardItems.indexOf(item)
+      const to = this.dashboardItems.indexOf(targetItem)
+      if (from === -1 || to === -1 || from === to) return
+      const reordered = [...this.dashboardItems]
+      ;[reordered[from], reordered[to]] = [reordered[to], reordered[from]]
+      this.dashboardItems = reordered
+      localStorage.setItem(DASHBOARD_KEY, JSON.stringify(this.dashboardItems))
     },
     move(bpm: number, direction: -1 | 1) {
-      this.moveTo(bpm, this.order.indexOf(bpm) + direction)
-    },
-    moveTo(bpm: number, to: number) {
-      const from = this.order.indexOf(bpm)
-      if (from === -1 || to < 0 || to >= this.order.length || from === to) return
-      const reordered = [...this.order]
+      const from = this.tempos.indexOf(bpm)
+      const to = from + direction
+      if (from === -1 || to < 0 || to >= this.tempos.length) return
+      const reordered = [...this.tempos]
       const [tempo] = reordered.splice(from, 1)
       reordered.splice(to, 0, tempo)
-      this.order = reordered
-      this.tempos = reordered.filter(bpm => !isBuiltInTempo(bpm))
-      this.persist()
+      this.tempos = reordered
+      localStorage.setItem(KEY, JSON.stringify(this.tempos))
     },
     moveTo(bpm: number, targetBpm: number) {
       const from = this.tempos.indexOf(bpm)

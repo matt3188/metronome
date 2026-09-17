@@ -32,9 +32,9 @@ describe('TempoButton', () => {
     const custom = mount(TempoButton, { props: { bpm: 120, active: false, editing: true } })
     const preset = mount(TempoButton, { props: { bpm: 100, active: false, editing: true, preset: true } })
 
-    expect(custom.find('[aria-label="Remove 120 BPM"]').exists()).toBe(true)
-    expect(preset.find('[aria-label="Remove 100 BPM"]').exists()).toBe(true)
-    expect(preset.attributes('draggable')).toBe('true')
+    expect(custom.find('[aria-label="Remove 120 BPM from dashboard"]').exists()).toBe(true)
+    expect(preset.find('[aria-label="Remove 100 BPM from dashboard"]').exists()).toBe(true)
+    expect(preset.attributes('data-dashboard-tempo')).toBe('100')
   })
 
   it('reports pointer movement after a long press for drag reordering', async () => {
