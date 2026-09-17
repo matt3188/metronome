@@ -11,7 +11,7 @@ const props = defineProps<{
   canMoveLater?: boolean
   dragging?: boolean
 }>()
-const emit = defineEmits<{ press: []; longpress: []; remove: []; move: [direction: -1 | 1]; dragmove: [point: { x: number; y: number }]; dragend: [] }>()
+const emit = defineEmits<{ press: []; longpress: []; remove: []; move: [direction: -1 | 1]; dragstart: []; drop: [] }>()
 
 const held = ref(false)
 const dragOffset = ref({ x: 0, y: 0 })
@@ -98,16 +98,17 @@ onBeforeUnmount(() => {
 <template>
   <article
     class="tempo-card-wrap"
-    :class="{ editing, preset, dragging: dragging || isDragging }"
-    :style="dragStyle"
-    :data-tempo="bpm"
-    :data-dashboard-tempo="bpm"
+    :class="{ editing, preset, movable: editing && !moved && (canMoveEarlier || canMoveLater) }"
+    :draggable="editing ? 'true' : 'false'"
+    @dragstart="$emit('dragstart')"
+    @dragover.prevent
+    @drop.prevent="$emit('drop')"
   >
     <button
       class="tempo-card"
       :class="{ active }"
       :aria-pressed="active"
-      :aria-label="`${bpm} BPM${editing ? (preset ? ', preset tempo' : ', custom tempo') : ''}`"
+      :aria-label="`${bpm} BPM${editing ? (preset ? ', preset' : ', custom tempo') : ''}`"
       @click="press"
       @pointerdown="startHold"
       @pointermove.stop="drag"
@@ -116,11 +117,10 @@ onBeforeUnmount(() => {
       draggable="false"
     >
       <span class="tempo-value">{{ bpm }}</span><span class="tempo-unit">BPM</span>
-      <span class="play-icon" aria-hidden="true">{{ active ? '✓' : '→' }}</span>
-      <span class="tempo-label">{{ editing ? (preset ? 'Preset tempo' : 'Custom tempo') : (label ?? 'Tap to select') }}</span>
+      <span class="play-icon" aria-hidden="true">{{ active ? 'Ⅱ' : '▶' }}</span>
+      <span class="tempo-label">{{ editing ? (preset ? 'Preset' : 'Custom tempo') : (label ?? 'Tap to play') }}</span>
     </button>
-    <button v-if="editing" type="button" class="remove-tempo" :aria-label="`Remove ${bpm} BPM from dashboard`" @click="$emit('remove')">−</button>
-    <div v-if="editing" class="tempo-actions" :aria-label="`${bpm} BPM reorder controls`">
+    <div v-if="editing" class="tempo-actions" :aria-label="`${bpm} BPM controls`">
       <button type="button" :disabled="!canMoveEarlier" :aria-label="`Move ${bpm} BPM earlier`" @click="$emit('move', -1)">←</button>
       <button type="button" :disabled="!canMoveLater" :aria-label="`Move ${bpm} BPM later`" @click="$emit('move', 1)">→</button>
     </div>
