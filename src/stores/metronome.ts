@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { trackUsage } from '../services/analytics'
 import { metronomeService } from '../services/metronome'
 import type { MetronomePitch } from '../services/metronome'
 
@@ -11,14 +12,17 @@ export const useMetronomeStore = defineStore('metronome', {
       this.pitch = pitch
       await metronomeService.start(bpm, pitch, beat => { this.beat = beat })
       this.isPlaying = true
+      trackUsage('metronome_started', { bpm, pitch })
     },
     setTempo(bpm: number) {
       this.bpm = Math.min(240, Math.max(30, Math.round(bpm)))
       if (this.isPlaying) metronomeService.setTempo(this.bpm)
     },
     setPitch(pitch: MetronomePitch) {
+      const changed = this.pitch !== pitch
       this.pitch = pitch
       if (this.isPlaying) metronomeService.setPitch(pitch)
+      if (changed) trackUsage('pitch_changed', { pitch })
     },
     select(bpm: number, pitch: MetronomePitch = this.pitch) {
       this.setTempo(bpm)
@@ -34,6 +38,7 @@ export const useMetronomeStore = defineStore('metronome', {
     stop() {
       metronomeService.stop()
       this.isPlaying = false
+      trackUsage('metronome_stopped', { bpm: this.bpm })
     },
   },
 })
