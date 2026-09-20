@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="Metronome M">
+  <rect width="180" height="180" fill="#12130f" />
+  <circle cx="150" cy="30" r="10" fill="#d8ff60" />
+  <path fill="#d8ff60" d="M32 133V47h20l38 49 38-49h20v86h-23V82l-35 44-35-44v51H32Z" />
+</svg>
