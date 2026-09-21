@@ -119,6 +119,23 @@ describe('HomeView', () => {
     expect(wrapper.get('.add-preset').attributes('disabled')).toBeDefined()
   })
 
+  it('adds and edits a label for a preset', async () => {
+    const wrapper = mount(HomeView, {
+      global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    })
+    wrapper.getComponent(BpmDial).vm.$emit('update:modelValue', 72)
+    await wrapper.vm.$nextTick()
+    await wrapper.get('.preset-label-field input').setValue('Warm-up')
+    await wrapper.get('.add-preset').trigger('click')
+
+    expect(wrapper.get('[data-tempo="72"] .preset-custom-label').text()).toBe('Warm-up')
+
+    await wrapper.get('.tempo-grid-heading button').trigger('click')
+    const labelInput = wrapper.get<HTMLInputElement>('[data-tempo="72"] .preset-label-input')
+    await labelInput.setValue('Practice')
+    expect(usePresetsStore().labels[72]).toBe('Practice')
+  })
+
   it('offers to overwrite the selected preset after the dial changes', async () => {
     const wrapper = mount(HomeView, {
       global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } },

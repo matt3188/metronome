@@ -5,7 +5,9 @@ import type { MetronomePitch } from '../services/metronome'
 const KEY = 'metronome-presets'
 const PITCH_KEY = 'metronome-preset-pitches'
 const DASHBOARD_KEY = 'metronome-dashboard-tempos'
+const LABEL_KEY = 'metronome-preset-labels'
 export type DashboardItem = number
+const normalizeLabel = (label: string) => label.trim().slice(0, 40)
 const load = (): number[] => {
   try {
     const saved: unknown = JSON.parse(localStorage.getItem(KEY) ?? '[]')
@@ -19,6 +21,16 @@ const loadPitches = (): Record<number, MetronomePitch> => {
     const saved: unknown = JSON.parse(localStorage.getItem(PITCH_KEY) ?? '{}')
     if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return {}
     return Object.fromEntries(Object.entries(saved).filter(([, pitch]) => pitch === 'high' || pitch === 'low'))
+  } catch { return {} }
+}
+const loadLabels = (): Record<number, string> => {
+  try {
+    const saved: unknown = JSON.parse(localStorage.getItem(LABEL_KEY) ?? '{}')
+    if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return {}
+    return Object.fromEntries(Object.entries(saved)
+      .filter(([bpm, label]) => Number.isInteger(Number(bpm)) && typeof label === 'string')
+      .map(([bpm, label]) => [bpm, normalizeLabel(label as string)])
+      .filter(([, label]) => label.length > 0))
   } catch { return {} }
 }
 const loadDashboard = (customTempos: number[]): DashboardItem[] => {
@@ -39,7 +51,7 @@ const loadDashboard = (customTempos: number[]): DashboardItem[] => {
 export const usePresetsStore = defineStore('presets', {
   state: () => {
     const tempos = load()
-    return { tempos, dashboardItems: loadDashboard(tempos), pitches: loadPitches() }
+    return { tempos, dashboardItems: loadDashboard(tempos), pitches: loadPitches(), labels: loadLabels() }
   },
   getters: {
     dashboardTempos: state => state.dashboardItems.filter((item): item is number => typeof item === 'number'),
@@ -47,7 +59,7 @@ export const usePresetsStore = defineStore('presets', {
       .filter(tempo => !state.dashboardItems.includes(tempo)),
   },
   actions: {
-    add(bpm: number, pitch: MetronomePitch = 'high') {
+    add(bpm: number, pitch: MetronomePitch = 'high', label = '') {
       if (!isBuiltInTempo(bpm) && !this.tempos.includes(bpm)) {
         this.tempos.push(bpm)
         this.dashboardItems.push(bpm)
@@ -58,8 +70,9 @@ export const usePresetsStore = defineStore('presets', {
         this.pitches[bpm] = pitch
         localStorage.setItem(PITCH_KEY, JSON.stringify(this.pitches))
       }
+      this.setLabel(bpm, label)
     },
-    overwrite(previousBpm: number, bpm: number, pitch: MetronomePitch = 'high') {
+    overwrite(previousBpm: number, bpm: number, pitch: MetronomePitch = 'high', label = this.labels[previousBpm] ?? '') {
       if (!this.dashboardItems.includes(previousBpm) || previousBpm === bpm) return
 
       const replaced = this.dashboardItems.map(value => value === previousBpm ? bpm : value)
@@ -69,20 +82,30 @@ export const usePresetsStore = defineStore('presets', {
         this.tempos = this.tempos.filter(value => value !== previousBpm)
         delete this.pitches[previousBpm]
       }
+      if (previousBpm !== bpm) delete this.labels[previousBpm]
       if (!isBuiltInTempo(bpm) && !this.tempos.includes(bpm)) this.tempos.push(bpm)
       if (!isBuiltInTempo(bpm)) this.pitches[bpm] = pitch
 
       localStorage.setItem(KEY, JSON.stringify(this.tempos))
       localStorage.setItem(PITCH_KEY, JSON.stringify(this.pitches))
       localStorage.setItem(DASHBOARD_KEY, JSON.stringify(this.dashboardItems))
+      this.setLabel(bpm, label)
     },
     remove(bpm: number) {
       this.tempos = this.tempos.filter(value => value !== bpm)
       this.dashboardItems = this.dashboardItems.filter(value => value !== bpm)
       delete this.pitches[bpm]
+      delete this.labels[bpm]
       localStorage.setItem(KEY, JSON.stringify(this.tempos))
       localStorage.setItem(PITCH_KEY, JSON.stringify(this.pitches))
       localStorage.setItem(DASHBOARD_KEY, JSON.stringify(this.dashboardItems))
+      localStorage.setItem(LABEL_KEY, JSON.stringify(this.labels))
+    },
+    setLabel(bpm: number, label: string) {
+      const normalized = normalizeLabel(label)
+      if (normalized) this.labels[bpm] = normalized
+      else delete this.labels[bpm]
+      localStorage.setItem(LABEL_KEY, JSON.stringify(this.labels))
     },
     removeFromDashboard(bpm: number) {
       this.dashboardItems = this.dashboardItems.filter(value => value !== bpm)
