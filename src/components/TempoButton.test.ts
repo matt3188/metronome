@@ -147,4 +147,17 @@ describe('TempoButton', () => {
     expect(custom.attributes('data-dashboard-tempo')).toBe('120')
     expect(builtIn.attributes('data-dashboard-tempo')).toBe('100')
   })
+
+  it('displays a custom label and lets it be changed in edit mode', async () => {
+    const wrapper = mount(TempoButton, {
+      props: { bpm: 120, active: false, customLabel: 'Chorus' },
+    })
+    expect(wrapper.get('.preset-custom-label').text()).toBe('Chorus')
+
+    await wrapper.setProps({ editing: true })
+    const input = wrapper.get<HTMLInputElement>('.preset-label-input')
+    await input.setValue('Verse')
+
+    expect(wrapper.emitted('label')).toEqual([['Verse']])
+  })
 })
