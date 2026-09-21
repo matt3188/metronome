@@ -4,6 +4,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App.vue'
 import { useMetronomeStore } from './stores/metronome'
 
+const pwa = vi.hoisted(() => ({ onUpdate: undefined as (() => void) | undefined, apply: vi.fn() }))
+
+vi.mock('./services/pwa', () => ({
+  watchForPwaUpdates: vi.fn((onUpdate: (update: { apply: () => void }) => void) => {
+    pwa.onUpdate = () => onUpdate({ apply: pwa.apply })
+    return vi.fn()
+  }),
+}))
+
 vi.mock('./services/metronome', () => ({
   metronomeService: {
     start: vi.fn().mockResolvedValue(undefined),
@@ -17,6 +26,7 @@ describe('App pitch toggle', () => {
     localStorage.clear()
     vi.stubGlobal('matchMedia', vi.fn(() => ({ matches: false })))
     setActivePinia(createPinia())
+    pwa.apply.mockClear()
   })
 
   it('switches between high and low pitch from the header', async () => {
@@ -52,5 +62,24 @@ describe('App pitch toggle', () => {
     expect(wrapper.find('.playback-toggle').exists()).toBe(false)
     expect(wrapper.find('.now-playing .playback-toggle').exists()).toBe(false)
     expect(wrapper.get('.now-playing-label').text()).toBe('Ready to play')
+  })
+
+  it('offers to activate a newly available version', async () => {
+    const wrapper = mount(App, {
+      global: {
+        stubs: {
+          RouterLink: { template: '<a><slot /></a>' },
+          RouterView: true,
+        },
+      },
+    })
+
+    expect(wrapper.find('.update-notice').exists()).toBe(false)
+    pwa.onUpdate?.()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.get('.update-notice').text()).toContain('A new version of Metronome is ready.')
+    await wrapper.get('.update-notice button').trigger('click')
+    expect(pwa.apply).toHaveBeenCalledOnce()
   })
 })
