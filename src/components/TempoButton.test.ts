@@ -155,6 +155,8 @@ describe('TempoButton', () => {
     expect(wrapper.get('.preset-custom-label').text()).toBe('Chorus')
 
     await wrapper.setProps({ editing: true })
+    expect(wrapper.get('.tempo-card').text()).toContain('Chorus')
+    expect(wrapper.get('.tempo-card').attributes('aria-label')).toContain('Chorus, 120 BPM')
     const input = wrapper.get<HTMLInputElement>('.preset-label-input')
     await input.setValue('Verse')
 
