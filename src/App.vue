@@ -1,16 +1,31 @@
 <script setup lang="ts">
+import { onBeforeUnmount, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useMetronomeStore } from './stores/metronome'
 import { useThemeStore } from './stores/theme'
+import { watchForPwaUpdates, type PwaUpdate } from './services/pwa'
 
 const metronome = useMetronomeStore()
 const themeStore = useThemeStore()
 const { beat, bpm, isPlaying, pitch } = storeToRefs(metronome)
 const { theme } = storeToRefs(themeStore)
+const availableUpdate = ref<PwaUpdate>()
+const stopWatchingForUpdates = watchForPwaUpdates((update) => {
+  availableUpdate.value = update
+})
+
+onBeforeUnmount(stopWatchingForUpdates)
 </script>
 
 <template>
   <div class="shell">
+    <aside v-if="availableUpdate" class="update-notice" role="status" aria-live="polite">
+      <div>
+        <strong>Update available</strong>
+        <span>A new version of Metronome is ready.</span>
+      </div>
+      <button type="button" @click="availableUpdate.apply()">Update now</button>
+    </aside>
     <header>
       <RouterLink to="/" class="brand" aria-label="Metronome home"><span class="brand-dot" />METRONOME</RouterLink>
       <div class="header-actions">
