@@ -10,9 +10,38 @@ const themeStore = useThemeStore()
 const { beat, bpm, isPlaying, pitch } = storeToRefs(metronome)
 const { theme } = storeToRefs(themeStore)
 const availableUpdate = ref<PwaUpdate>()
+const feedbackOpen = ref(false)
+const feedbackStatus = ref<'idle' | 'sending' | 'sent' | 'error'>('idle')
 const stopWatchingForUpdates = watchForPwaUpdates((update) => {
   availableUpdate.value = update
 })
+
+function openFeedback() {
+  feedbackStatus.value = 'idle'
+  feedbackOpen.value = true
+}
+
+function closeFeedback() {
+  if (feedbackStatus.value !== 'sending') feedbackOpen.value = false
+}
+
+async function submitFeedback(event: Event) {
+  const form = event.currentTarget as HTMLFormElement
+  feedbackStatus.value = 'sending'
+
+  try {
+    const response = await fetch('https://formspree.io/f/xqpaqjnn', {
+      method: 'POST',
+      body: new FormData(form),
+      headers: { Accept: 'application/json' },
+    })
+
+    feedbackStatus.value = response.ok ? 'sent' : 'error'
+    if (response.ok) form.reset()
+  } catch {
+    feedbackStatus.value = 'error'
+  }
+}
 
 onBeforeUnmount(stopWatchingForUpdates)
 </script>
@@ -81,15 +110,53 @@ onBeforeUnmount(stopWatchingForUpdates)
     </aside>
     <footer>
       <span>Keep time. Find your rhythm.</span>
-      <a
-        class="feedback-link"
-        href="https://github.com/matt3188/metronome/issues/new/choose"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
+      <button class="feedback-link" type="button" @click="openFeedback">
         Share feedback
-        <span aria-hidden="true">↗</span>
-      </a>
+        <span aria-hidden="true">＋</span>
+      </button>
     </footer>
+
+    <div v-if="feedbackOpen" class="feedback-backdrop" @click.self="closeFeedback">
+      <section class="feedback-dialog" role="dialog" aria-modal="true" aria-labelledby="feedback-title">
+        <button class="feedback-close" type="button" aria-label="Close feedback form" :disabled="feedbackStatus === 'sending'" @click="closeFeedback">×</button>
+
+        <template v-if="feedbackStatus === 'sent'">
+          <p class="eyebrow">MESSAGE SENT</p>
+          <h2 id="feedback-title">Thanks for helping!</h2>
+          <p class="feedback-intro">Your feedback has been sent. We appreciate you taking the time to share it.</p>
+          <button class="feedback-submit" type="button" @click="closeFeedback">Done</button>
+        </template>
+
+        <form v-else @submit.prevent="submitFeedback">
+          <p class="eyebrow">HELP US IMPROVE</p>
+          <h2 id="feedback-title">Share feedback</h2>
+          <p class="feedback-intro">Found a problem or have an idea? Tell us in your own words.</p>
+
+          <label>
+            What would you like to share?
+            <select name="feedback_type" required>
+              <option value="Bug report">Something isn’t working</option>
+              <option value="Feature request">I have an idea</option>
+              <option value="General feedback">Something else</option>
+            </select>
+          </label>
+
+          <label>
+            Tell us more
+            <textarea name="message" rows="5" required placeholder="What happened, or what would you like Metronome to do?"></textarea>
+          </label>
+
+          <label>
+            Your email <span>(optional)</span>
+            <input name="email" type="email" autocomplete="email" placeholder="Only if you’d like a reply">
+          </label>
+
+          <p v-if="feedbackStatus === 'error'" class="feedback-error" role="alert">Sorry, we couldn’t send that. Please try again.</p>
+          <button class="feedback-submit" type="submit" :disabled="feedbackStatus === 'sending'">
+            {{ feedbackStatus === 'sending' ? 'Sending…' : 'Send feedback' }}
+          </button>
+        </form>
+      </section>
+    </div>
   </div>
 </template>

@@ -83,7 +83,7 @@ describe('App pitch toggle', () => {
     expect(pwa.apply).toHaveBeenCalledOnce()
   })
 
-  it('links users to the feedback form in a safe new tab', () => {
+  it('opens a simple feedback form from the footer', async () => {
     const wrapper = mount(App, {
       global: {
         stubs: {
@@ -93,10 +93,32 @@ describe('App pitch toggle', () => {
       },
     })
 
-    const feedbackLink = wrapper.get('.feedback-link')
-    expect(feedbackLink.text()).toContain('Share feedback')
-    expect(feedbackLink.attributes('href')).toBe('https://github.com/matt3188/metronome/issues/new/choose')
-    expect(feedbackLink.attributes('target')).toBe('_blank')
-    expect(feedbackLink.attributes('rel')).toBe('noopener noreferrer')
+    expect(wrapper.find('.feedback-dialog').exists()).toBe(false)
+    await wrapper.get('.feedback-link').trigger('click')
+
+    expect(wrapper.get('.feedback-dialog').attributes('aria-modal')).toBe('true')
+    expect(wrapper.get('[name="feedback_type"]').text()).toContain('Something isn’t working')
+    expect(wrapper.get('[name="message"]').attributes('required')).toBeDefined()
+    expect(wrapper.get('[name="email"]').attributes('required')).toBeUndefined()
+  })
+
+  it('submits feedback to Formspree and confirms success', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true })
+    vi.stubGlobal('fetch', fetchMock)
+    const wrapper = mount(App, {
+      global: {
+        stubs: {
+          RouterLink: { template: '<a><slot /></a>' },
+          RouterView: true,
+        },
+      },
+    })
+
+    await wrapper.get('.feedback-link').trigger('click')
+    await wrapper.get('[name="message"]').setValue('Please add a tap tempo button.')
+    await wrapper.get('.feedback-dialog form').trigger('submit')
+    await vi.waitFor(() => expect(wrapper.get('.feedback-dialog').text()).toContain('Thanks for helping!'))
+
+    expect(fetchMock).toHaveBeenCalledWith('https://formspree.io/f/xqpaqjnn', expect.objectContaining({ method: 'POST' }))
   })
 })
