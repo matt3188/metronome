@@ -20,6 +20,21 @@ can permanently fix the environment instead by replacing
 Run the test suite with `./scripts/npm test` and create a production build with
 `./scripts/npm run build`.
 
+## Usage analytics
+
+Set `VITE_GOOGLE_ANALYTICS_ID` to a GA4 measurement ID when building or running
+the app to enable Google Analytics. For example:
+
+```bash
+VITE_GOOGLE_ANALYTICS_ID=G-XXXXXXXXXX ./scripts/npm run build
+```
+
+When the variable is absent, analytics is not loaded. When configured, route
+changes are recorded as page views so navigation in the single-page app is
+included in usage reporting. The app also records metronome starts and stops,
+pitch changes, and saved presets. These events contain only the selected BPM
+and pitch—never names, email addresses, or custom text.
+
 ## Preparing a pull request
 
 After committing your work, run `npm run prepare:pr`. The command fetches
