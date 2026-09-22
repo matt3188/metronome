@@ -2,6 +2,7 @@
 import { storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import BpmDial from '../components/BpmDial.vue'
+import { trackUsage } from '../services/analytics'
 import { useMetronomeStore } from '../stores/metronome'
 import { usePresetsStore } from '../stores/presets'
 
@@ -13,7 +14,11 @@ const isSaved = computed(() => saved.value || (
   presets.tempos.includes(bpm.value) && (presets.pitches[bpm.value] ?? 'high') === pitch.value
 ))
 const adjust = (amount: number) => metronome.setTempo(bpm.value + amount)
-const save = () => { presets.add(bpm.value, pitch.value); saved.value = true }
+const save = () => {
+  presets.add(bpm.value, pitch.value)
+  saved.value = true
+  trackUsage('preset_saved', { bpm: bpm.value, pitch: pitch.value })
+}
 watch([bpm, pitch], () => { saved.value = false })
 </script>
 <template>
