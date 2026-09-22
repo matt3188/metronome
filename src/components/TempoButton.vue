@@ -108,7 +108,7 @@ onBeforeUnmount(() => {
       class="tempo-card"
       :class="{ active }"
       :aria-pressed="active"
-      :aria-label="`${bpm} BPM${editing ? (preset ? ', preset tempo' : ', custom tempo') : ''}`"
+      :aria-label="`${customLabel ? `${customLabel}, ` : ''}${bpm} BPM${editing ? (preset ? ', preset tempo' : ', custom tempo') : ''}`"
       @click="press"
       @pointerdown="startHold"
       @pointermove.stop="drag"
@@ -117,7 +117,7 @@ onBeforeUnmount(() => {
       draggable="false"
     >
       <span class="tempo-value">{{ bpm }}</span><span class="tempo-unit">BPM</span>
-      <span v-if="customLabel && !editing" class="preset-custom-label">{{ customLabel }}</span>
+      <span v-if="customLabel" class="preset-custom-label">{{ customLabel }}</span>
       <span class="play-icon" aria-hidden="true">{{ active ? '✓' : '→' }}</span>
       <span class="tempo-label">{{ editing ? (preset ? 'Preset tempo' : 'Custom tempo') : (label ?? 'Tap to select') }}</span>
     </button>

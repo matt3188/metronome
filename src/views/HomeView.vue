@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 import BpmDial from '../components/BpmDial.vue'
 import TempoButton from '../components/TempoButton.vue'
 import { BUILT_IN_TEMPOS } from '../constants/tempos'
+import { trackUsage } from '../services/analytics'
 import { useMetronomeStore } from '../stores/metronome'
 import { usePresetsStore, type DashboardItem } from '../stores/presets'
 
@@ -18,6 +19,7 @@ const canOverwritePreset = computed(() => selectedPreset.value !== null && selec
 const addCurrentTempo = () => {
   presets.add(bpm.value, pitch.value, presetLabel.value)
   presets.restoreTempo(bpm.value)
+  trackUsage('preset_saved', { bpm: bpm.value, pitch: pitch.value })
 }
 const selectPreset = (tempo: number) => {
   selectedPreset.value = tempo
@@ -28,6 +30,7 @@ const overwritePreset = () => {
   if (selectedPreset.value === null) return
   presets.overwrite(selectedPreset.value, bpm.value, pitch.value, presetLabel.value)
   selectedPreset.value = bpm.value
+  trackUsage('preset_saved', { bpm: bpm.value, pitch: pitch.value })
 }
 const draggingItem = ref<DashboardItem>()
 const setEditing = (value: boolean) => {
