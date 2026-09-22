@@ -13,20 +13,22 @@ const presets = usePresetsStore()
 const { bpm, pitch, isPlaying } = storeToRefs(metronome)
 const editing = ref(false)
 const selectedPreset = ref<number | null>(null)
+const presetLabel = ref('')
 const isCurrentTempoPreset = computed(() => presets.dashboardItems.includes(bpm.value))
 const canOverwritePreset = computed(() => selectedPreset.value !== null && selectedPreset.value !== bpm.value)
 const addCurrentTempo = () => {
-  presets.add(bpm.value, pitch.value)
+  presets.add(bpm.value, pitch.value, presetLabel.value)
   presets.restoreTempo(bpm.value)
   trackUsage('preset_saved', { bpm: bpm.value, pitch: pitch.value })
 }
 const selectPreset = (tempo: number) => {
   selectedPreset.value = tempo
+  presetLabel.value = presets.labels[tempo] ?? ''
   metronome.toggle(tempo, presets.pitches[tempo] ?? 'high')
 }
 const overwritePreset = () => {
   if (selectedPreset.value === null) return
-  presets.overwrite(selectedPreset.value, bpm.value, pitch.value)
+  presets.overwrite(selectedPreset.value, bpm.value, pitch.value, presetLabel.value)
   selectedPreset.value = bpm.value
   trackUsage('preset_saved', { bpm: bpm.value, pitch: pitch.value })
 }
@@ -74,6 +76,7 @@ const dragItem = (item: DashboardItem, point: { x: number; y: number }) => {
       <p class="eyebrow">FINE TUNE</p>
       <h2 id="dashboard-dial-title">Set your BPM</h2>
       <p>Turn the dial, save your tempo, or tap a preset below.</p>
+      <label class="preset-label-field">Preset label <span>(optional)</span><input v-model="presetLabel" type="text" maxlength="40" placeholder="e.g. Warm-up"></label>
       <button
         class="add-preset"
         type="button"
@@ -109,10 +112,12 @@ const dragItem = (item: DashboardItem, point: { x: number; y: number }) => {
         :can-move-earlier="index > 0"
         :can-move-later="index < presets.dashboardItems.length - 1"
         :label="`${presets.pitches[item] ?? 'high'} pitch`"
+        :custom-label="presets.labels[item]"
         @longpress="setEditing(true)"
         @press="editing ? undefined : selectPreset(item)"
         @remove="presets.removeFromDashboard(item)"
         @move="presets.moveDashboard(item, $event)"
+        @label="presets.setLabel(item, $event)"
         @dragmove="dragItem(item, $event)"
         @dragend="draggingItem = undefined"
       />

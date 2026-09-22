@@ -10,6 +10,7 @@ const metronome = useMetronomeStore()
 const presets = usePresetsStore()
 const { bpm, pitch, isPlaying } = storeToRefs(metronome)
 const saved = ref(false)
+const presetLabel = ref('')
 const isSaved = computed(() => saved.value || (
   presets.tempos.includes(bpm.value) && (presets.pitches[bpm.value] ?? 'high') === pitch.value
 ))
@@ -32,6 +33,7 @@ watch([bpm, pitch], () => { saved.value = false })
       @toggle="metronome.toggle()"
     />
     <div class="adjustments"><button @click="adjust(-5)">−5</button><button @click="adjust(-1)">−1</button><button @click="adjust(1)">+1</button><button @click="adjust(5)">+5</button></div>
+    <label class="preset-label-field">Preset label <span>(optional)</span><input v-model="presetLabel" type="text" maxlength="40" placeholder="e.g. Warm-up"></label>
     <div class="sound-picker">
       <div><strong>Metronome pitch</strong><small>Choose how each beat sounds</small></div>
       <div class="pitch-options" aria-label="Metronome pitch">

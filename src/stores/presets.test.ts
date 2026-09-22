@@ -39,6 +39,28 @@ describe('presets store', () => {
     store.remove(130)
     expect(store.pitches[130]).toBeUndefined()
   })
+  it('persists, trims, and removes custom labels for any preset', () => {
+    const store = usePresetsStore()
+    store.setLabel(50, '  Warm-up  ')
+    store.add(135, 'low', 'Practice groove')
+
+    expect(store.labels).toEqual({ 50: 'Warm-up', 135: 'Practice groove' })
+    expect(localStorage.getItem('metronome-preset-labels')).toBe('{"50":"Warm-up","135":"Practice groove"}')
+
+    store.setLabel(50, '   ')
+    setActivePinia(createPinia())
+    expect(usePresetsStore().labels).toEqual({ 135: 'Practice groove' })
+  })
+
+  it('carries a label to an overwritten tempo', () => {
+    const store = usePresetsStore()
+    store.setLabel(50, 'Slow practice')
+
+    store.overwrite(50, 72, 'high')
+
+    expect(store.labels[50]).toBeUndefined()
+    expect(store.labels[72]).toBe('Slow practice')
+  })
   it('persists dashboard ordering and restores removed built-in tempos', () => {
     const store = usePresetsStore()
     store.add(80)

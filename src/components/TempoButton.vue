@@ -5,13 +5,14 @@ const props = defineProps<{
   bpm: number
   active: boolean
   label?: string
+  customLabel?: string
   editing?: boolean
   preset?: boolean
   canMoveEarlier?: boolean
   canMoveLater?: boolean
   dragging?: boolean
 }>()
-const emit = defineEmits<{ press: []; longpress: []; remove: []; move: [direction: -1 | 1]; dragmove: [point: { x: number; y: number }]; dragend: [] }>()
+const emit = defineEmits<{ press: []; longpress: []; remove: []; move: [direction: -1 | 1]; dragmove: [point: { x: number; y: number }]; dragend: []; label: [value: string] }>()
 
 const held = ref(false)
 const dragOffset = ref({ x: 0, y: 0 })
@@ -107,7 +108,7 @@ onBeforeUnmount(() => {
       class="tempo-card"
       :class="{ active }"
       :aria-pressed="active"
-      :aria-label="`${bpm} BPM${editing ? (preset ? ', preset tempo' : ', custom tempo') : ''}`"
+      :aria-label="`${customLabel ? `${customLabel}, ` : ''}${bpm} BPM${editing ? (preset ? ', preset tempo' : ', custom tempo') : ''}`"
       @click="press"
       @pointerdown="startHold"
       @pointermove.stop="drag"
@@ -116,9 +117,11 @@ onBeforeUnmount(() => {
       draggable="false"
     >
       <span class="tempo-value">{{ bpm }}</span><span class="tempo-unit">BPM</span>
+      <span v-if="customLabel" class="preset-custom-label">{{ customLabel }}</span>
       <span class="play-icon" aria-hidden="true">{{ active ? '✓' : '→' }}</span>
       <span class="tempo-label">{{ editing ? (preset ? 'Preset tempo' : 'Custom tempo') : (label ?? 'Tap to select') }}</span>
     </button>
+    <input v-if="editing" class="preset-label-input" type="text" :value="customLabel" maxlength="40" :aria-label="`Label for ${bpm} BPM preset`" placeholder="Add a label" @pointerdown.stop @click.stop @change="emit('label', ($event.target as HTMLInputElement).value)">
     <button v-if="editing" type="button" class="remove-tempo" :aria-label="`Remove ${bpm} BPM from dashboard`" @click="$emit('remove')">−</button>
     <div v-if="editing" class="tempo-actions" :aria-label="`${bpm} BPM reorder controls`">
       <button type="button" :disabled="!canMoveEarlier" :aria-label="`Move ${bpm} BPM earlier`" @click="$emit('move', -1)">←</button>
