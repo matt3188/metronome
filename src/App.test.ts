@@ -7,8 +7,11 @@ import { useMetronomeStore } from './stores/metronome'
 const pwa = vi.hoisted(() => ({ onUpdate: undefined as (() => void) | undefined, apply: vi.fn() }))
 
 vi.mock('./services/pwa', () => ({
-  watchForPwaUpdates: vi.fn((onUpdate: (update: { apply: () => void }) => void) => {
-    pwa.onUpdate = () => onUpdate({ apply: pwa.apply })
+  watchForPwaUpdates: vi.fn((onUpdate: (update: { apply: () => void, changes: readonly string[] }) => void) => {
+    pwa.onUpdate = () => onUpdate({
+      apply: pwa.apply,
+      changes: ['Faster update checks.', 'Clear release notes.'],
+    })
     return vi.fn()
   }),
 }))
@@ -79,6 +82,11 @@ describe('App pitch toggle', () => {
     await wrapper.vm.$nextTick()
 
     expect(wrapper.get('.update-notice').text()).toContain('A new version of Metronome is ready.')
+    expect(wrapper.get('.update-notice').text()).toContain("What's new")
+    expect(wrapper.findAll('.update-notice li').map((item) => item.text())).toEqual([
+      'Faster update checks.',
+      'Clear release notes.',
+    ])
     await wrapper.get('.update-notice button').trigger('click')
     expect(pwa.apply).toHaveBeenCalledOnce()
   })

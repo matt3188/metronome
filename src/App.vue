@@ -23,6 +23,10 @@ onBeforeUnmount(stopWatchingForUpdates)
       <div>
         <strong>Update available</strong>
         <span>A new version of Metronome is ready.</span>
+        <span class="update-heading">What's new</span>
+        <ul>
+          <li v-for="change in availableUpdate.changes" :key="change">{{ change }}</li>
+        </ul>
       </div>
       <button type="button" @click="availableUpdate.apply()">Update now</button>
     </aside>

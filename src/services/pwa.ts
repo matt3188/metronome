@@ -1,8 +1,14 @@
-const SERVICE_WORKER_URL = `${import.meta.env.BASE_URL}sw.js`
+const SERVICE_WORKER_URL = `${import.meta.env.BASE_URL}sw.js?v=${encodeURIComponent(__APP_BUILD_ID__)}`
 const UPDATE_INTERVAL = 60 * 60 * 1000
+
+const CHANGES = [
+  'See what changed before installing an update.',
+  'Receive new versions reliably after every deployment.',
+] as const
 
 export type PwaUpdate = {
   apply: () => void
+  changes: readonly string[]
 }
 
 export function watchForPwaUpdates(onUpdate: (update: PwaUpdate) => void): () => void {
@@ -19,7 +25,10 @@ export function watchForPwaUpdates(onUpdate: (update: PwaUpdate) => void): () =>
   }
 
   const announceWaitingWorker = (waiting: ServiceWorker) => {
-    onUpdate({ apply: () => waiting.postMessage({ type: 'SKIP_WAITING' }) })
+    onUpdate({
+      apply: () => waiting.postMessage({ type: 'SKIP_WAITING' }),
+      changes: CHANGES,
+    })
   }
 
   const checkForUpdate = () => {
