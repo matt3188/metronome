@@ -22,8 +22,9 @@ Run the test suite with `./scripts/npm test` and create a production build with
 
 ## Usage analytics
 
-Set `VITE_GOOGLE_ANALYTICS_ID` to a GA4 measurement ID when building or running
-the app to enable Google Analytics. For example:
+Production deployments use the GA4 measurement ID `G-27S3Y8ZNTL`. It is set in
+the GitHub Pages workflow, so analytics starts automatically after deployment.
+To enable analytics in another build, set `VITE_GOOGLE_ANALYTICS_ID` explicitly:
 
 ```bash
 VITE_GOOGLE_ANALYTICS_ID=G-XXXXXXXXXX ./scripts/npm run build

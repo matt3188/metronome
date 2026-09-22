@@ -36,6 +36,8 @@ jobs:
 
       - name: Build app
         run: npm run build
+        env:
+          VITE_GOOGLE_ANALYTICS_ID: G-27S3Y8ZNTL
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
