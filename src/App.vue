@@ -79,6 +79,17 @@ onBeforeUnmount(stopWatchingForUpdates)
         <span v-for="index in 4" :key="index" :class="{ active: isPlaying && beat % 4 === index - 1 }" />
       </div>
     </aside>
-    <footer>Keep time. Find your rhythm.</footer>
+    <footer>
+      <span>Keep time. Find your rhythm.</span>
+      <a
+        class="feedback-link"
+        href="https://github.com/matt3188/metronome/issues/new/choose"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        Share feedback
+        <span aria-hidden="true">↗</span>
+      </a>
+    </footer>
   </div>
 </template>

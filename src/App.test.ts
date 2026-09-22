@@ -82,4 +82,21 @@ describe('App pitch toggle', () => {
     await wrapper.get('.update-notice button').trigger('click')
     expect(pwa.apply).toHaveBeenCalledOnce()
   })
+
+  it('links users to the feedback form in a safe new tab', () => {
+    const wrapper = mount(App, {
+      global: {
+        stubs: {
+          RouterLink: { template: '<a><slot /></a>' },
+          RouterView: true,
+        },
+      },
+    })
+
+    const feedbackLink = wrapper.get('.feedback-link')
+    expect(feedbackLink.text()).toContain('Share feedback')
+    expect(feedbackLink.attributes('href')).toBe('https://github.com/matt3188/metronome/issues/new/choose')
+    expect(feedbackLink.attributes('target')).toBe('_blank')
+    expect(feedbackLink.attributes('rel')).toBe('noopener noreferrer')
+  })
 })
